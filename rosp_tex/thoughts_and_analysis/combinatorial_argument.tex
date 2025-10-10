@@ -1,0 +1,60 @@
+In this section we explore briefly some experiments I have conducted, in order to understand if the methodology I had in mind in order to prove that $\ROSP\notin\P$ is a valuable approach.
+
+To begin with, the rank-one matrix $S = \alpha \mathbf{p}\mathbf{p}^T$, with $\mathbf{p}\in\{-1,0,1\}^n$, $\alpha\in\mathbb{R}_{>0}$ is very general. 
+
+In order to shrink the search space (especially $\alpha$), we might consider only a small subsets of $M$ that has a very strict structure, so that $\alpha = 1$ and $M$ can be interpreted as a combinatorial object rather than an algebraic one.
+
+In my thughts, $M$ (symmetric) is:
+
+\begin{equation}
+\label{eq:matrix_M_combinatorial}
+	M = \begin{bmatrix}
+		n-2 & \pm 1 & \dots & \pm 1 \\
+		\pm 1 & n - 2 & \dots & \pm 1 \\
+		\vdots & \vdots & \ddots & \vdots \\
+		\pm 1 & \pm 1 & \dots & n - 2
+	\end{bmatrix}
+\end{equation}
+
+This is a good option due to the following reasons: 
+\begin{itemize}
+	\item $\mathbf{p}\in\{1,-1\}^n$. Since we need to adjust every row, no value in $\mathbf{p}$ can be zero.
+
+	\item $\alpha=1$. This is because, since in every row we need to ``adjust'' at least half the elements, then it is convenient to push $\alpha$ to the largest value possible, which is 1. \hubi{We can seek a more formal argument for this but for now that will do.}
+\end{itemize}
+
+I will collect, in an unordered way, all the facts, intuitions and ideas I had about these matrices: why they look as a good candidate in order to show that $\ROSP\notin\P$ and what are the main difficulties to this aim.
+
+\begin{intuition}
+	To begin with, $M$ can be interepreted as a graph, with labels on the edges ($\pm 1$), and the task is: assign a color to every node, so that we ``guess right'' at least half + 1 edges. By ``guessing right'' we mean: if an edge has color $+$, then the two nodes need to have the same color; if the edge is colored $-$, then the colors on the edges need to be different. Then, this looks extremely similar to the Unique Game problem (at least as described on 
+	\url{https://en.wikipedia.org/wiki/Unique_games_conjecture}, I am also reading \cite{svensson_approximation_2013}).
+\end{intuition}
+
+The main limitation to this view is that in the $\UG$ the fraction of constraints to satisfy is a global phenomena, in this setting we need to satisfy a certain fraction of constraints for every node.
+
+Additionally, there is the issue (raised by Tullio the first time I talked to him and Koppany about it around September 2025) that the matrix $M$ of \Cref{eq:matrix_M_combinatorial} might not be PSD (and, hence, impossible to prove to be PSD using Gershgorin circles techniques \cite{deville_optimizing_2019,varga_gersgorin_2004}).
+
+Luckily, this is not the case:
+
+\begin{proposition}
+\label{prop:combinatorial_M_is_psd}
+	Matrices as in \Cref{eq:matrix_M_combinatorial} are almost always PSD (especially for large values of $n$), and when they are PSD, they can often be proved so using ROSP technique.
+\end{proposition}
+
+\begin{proof}
+	The proof is only experimental, so it is not a proper proof: I created random symmetric matrices as in \Cref{eq:matrix_M_combinatorial}, checked that they are PSD and, indeed, they are.
+	
+	In addition to that, I also checked how many times you can prove that the matrix is PSD by using a shift vector $\mathbf{p}\in\{-1,1\}^n$: roughly half the times.
+	
+	To conclude, I checked if it is the case that the $\mathbf{p}$ vector can be something other than one of the rows: most of the times, it is just one of the rows (see \Cref{sec:tullio_approach_weighted_sum} for a further discussion on the topic). Sometimes, though ($\approx 10\%$) the vector is something different.
+	
+	In order to explore further the state of things, please have a look at the code in \texttt{check\_rosp.py} at commit \texttt{b770fbe} (or later?).
+\end{proof}
+
+The best problem I have at hand, so far, is:
+
+\begin{question}
+	Given a matrix $M$ as in \Cref{eq:matrix_M_combinatorial}---with the promise of being PSD---is it easy to find the right shift $S=\mathbf{pp}^T$? 
+\end{question}
+
+From a purely combinatorial point of view, the problems looks quite hard. Yet, although I would bet that it is not polynomially tractable, I would also imagine some weird property either algebraic or of the graph that canb be exploited in order to turn the problem into an easier one.
