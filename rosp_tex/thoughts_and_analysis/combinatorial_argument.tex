@@ -58,3 +58,32 @@ The best problem I have at hand, so far, is:
 \end{question}
 
 From a purely combinatorial point of view, the problems looks quite hard. Yet, although I would bet that it is not polynomially tractable, I would also imagine some weird property either algebraic or of the graph that canb be exploited in order to turn the problem into an easier one.
+
+An additional observation to keep in mind, which might be useful in order to show the $\NP$-completeness of $\ROSP$: when assigning labels on the nodes, we are de-facto creating two cliques (the clique of $+1$'s and the clique of $-1$'s) with edges labelled as $+$, and a cut in between the two cliques with edges labelled as $-$.
+
+This bears some similarities with $\MAXCUT$ (although, once again, $\MAXCUT$ is more of a general property of graphs, and here constraints are more local).
+
+In addition, another consideration, is the number of edges labelled as $-$ is generally smaller than the number of edges with a $+$ sign: given a bipartition $A,B$ s.t. $A\cup B=V$, such that $A$ is labelled with a $+$ and $B$ with a $-$ sign, it holds the following.
+
+\begin{lemma}
+\label{lemma:more_plus_than_minus_edges}
+	The number of edges with a $-$ sign oscillates between $n-1$ and $\frac{n^2}{4}$ (respectively, when $a$ the size of $A$ is $1$ or $\frac{n}{2}$), whereas the number of edges with a $+$ sign is in $[\frac{n^2}{4}-\frac{n}{2}, {n \choose 2} - (n-1)]$ (respectively, when $a=\frac{n}{2}$ and $a=n-1$).
+\end{lemma}
+\begin{proof}
+	Just count them. When $a= \frac{n}{2}$ then the bipartition is perfect. Inside the two cliques we have $2 {\frac{n}{2} \choose 2}$ edges of sign $+$ which is $2 \frac{\frac{n}{2}(\frac{n}{2}-1)}{2} = \frac{n^2}{4} - \frac{n}{2}$. The size of the crossing cut (number of edges with $-$ label) is simply ${n\choose 2}-|A|=\frac{n^2}{4}$.
+	
+	When, instead, $a=1$ then the number of edges of sign $+$ is ${n-1\choose 2} = \frac{(n-1)(n-2)}{2} = \frac{n^2-3n-2}{2}$, and the number of edges with sign $-$ is simply $n-1$.
+	
+	In between, when $n-1>a>1$, the number of edges varies between these two extremes.
+\end{proof}
+
+The above \Cref{lemma:more_plus_than_minus_edges} gives us a very rough upper bound on the number of edges with minus sign there can be. 
+
+\begin{question}
+	Does it? Try to understand if it is truly the case that when $M$ is made of all $-1$'s, then the above \Cref{lemma:more_plus_than_minus_edges} is telling us that we cannot ``fix'' enough entries for every row. \hubi{I think it was a good idea, but it might be wrong. I would just need to count them.}
+\end{question}
+\begin{proof}
+	Fast forward: I did it on top of my head with $n=10$: in practice, you have 90 entries (the 10 diagonal entries don't count), we have $8$ written on the diagonals, after the shift it becomes 7, so we can make at most 3 mistakes on every row, 30 mistakes in total. If they are all -1's, and we pick the combination $|A|=|B|=5$, which maximizes the number of -1's to $\frac{n^2}{4}$, multiplied by 2 to get $\frac{n^2}{2}=50$, then we still make 40 mistakes which are too many.
+\end{proof}
+
+This upper bound, though, could be not so interesting because a matrix with a lot of -1's is probably not PSD: I have done once again done some experiments, and it turns out that the matrix can still be PSD even if it has a fraction of roughly $1/200$ entries set to +1, in a matrix of size $100\times 100$. See commit \texttt{7a0a776} for further details.
