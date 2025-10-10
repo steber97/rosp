@@ -8,10 +8,11 @@ from utils import create_rand_matrix
 
 if __name__ == "__main__":
     failed = 0
+    tot = 0
     for prob in range(1,10):
-        for i in range(20, 1200, 100):
+        for i in range(10, 101, 10):
             for j in range(10):
                 if np.linalg.eig(create_rand_matrix(i, 1/prob))[0].min() < 0:
                     failed += 1
-                    print(i)
-    print(failed)
+                tot += 1
+    print(failed, tot)
