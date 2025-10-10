@@ -9,7 +9,7 @@ if __name__ == "__main__":
     tot_shift_by_row = 0
     repetitions = 100
     psd_tot = 0
-    n = 11
+    n = 15
     print_rosp = False
     print_unrosp = False
     for i in tqdm(range(repetitions)):
@@ -44,5 +44,5 @@ if __name__ == "__main__":
             print_rosp = True
         tot_shift_by_row += shift_by_row
         tot += 1 if rosp else 0
-    print(tot, repetitions, psd_tot, shift_by_row)
+    print(tot, repetitions, psd_tot, tot_shift_by_row)
         
