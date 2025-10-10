@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 from utils import create_rand_matrix
 
@@ -9,8 +10,8 @@ from utils import create_rand_matrix
 if __name__ == "__main__":
     failed = 0
     tot = 0
-    for prob in range(1,10):
-        for i in range(10, 101, 10):
+    for prob in tqdm(range(200,201, 1)):
+        for i in range(100, 101, 10):
             for j in range(10):
                 if np.linalg.eig(create_rand_matrix(i, 1/prob))[0].min() < 0:
                     failed += 1
