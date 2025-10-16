@@ -2,30 +2,36 @@ import numpy as np
 import itertools
 from tqdm import tqdm
 
-from utils import create_rand_matrix, zero_one_with_probability, diagonally_dominant, psd
+from utils import create_rand_matrix, zero_one_with_probability, \
+        diagonally_dominant, psd, is_vect_eigenv
 
 if __name__ == "__main__":
     tot = 0
     tot_shift_by_row = 0
     repetitions = 100
     psd_tot = 0
+    tot_eigv = 0
     n = 15
+    prob = 0.5
     print_rosp = False
     print_unrosp = False
     for i in tqdm(range(repetitions)):
-        M = create_rand_matrix(n, 0.5)
+        M = create_rand_matrix(n, prob)
         psd_tot += psd(M)
-        vectors = itertools.product([0,1], repeat=n)
+        vectors = itertools.product([-1,1], repeat=n)
         rosp = False
         shift_by_row = False
         v_shift = None
         for v in vectors:
-            v = np.array([-1 if x==0 else 1 for x in v])
+            v = np.array(v)
             S = np.outer(v, v)
             if diagonally_dominant(M-S):
                 rosp = True
                 v_shift = v
-                break
+                if is_vect_eigenv(M, v):
+                    tot_eigv += 1
+                    break
+                
         if not print_unrosp and not rosp:
             print("Rosp?", rosp)
             print(M)
@@ -44,5 +50,8 @@ if __name__ == "__main__":
             print_rosp = True
         tot_shift_by_row += shift_by_row
         tot += 1 if rosp else 0
-    print(tot, repetitions, psd_tot, tot_shift_by_row)
+    print(
+        f"total rosp:\t{tot}\ntot repetitions:\t{repetitions}\ntot ",
+        f"psd:\t{psd_tot}\ntot shifted by row:\t{tot_shift_by_row}\n",
+        f"tot eigenvect:\t{tot_eigv}")
         

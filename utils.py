@@ -23,3 +23,12 @@ def diagonally_dominant(M):
 
 def psd(M):
     return np.linalg.eig(M)[0].min() >= 0
+
+def is_vect_eigenv(M: np.array, v: np.array):
+    """
+    Check if v is an eigenvector for M
+    """
+    w = M @ v
+    w = w / v
+    w -= w[0]
+    return np.all(np.abs(w) < 1e-6)
