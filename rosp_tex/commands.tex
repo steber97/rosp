@@ -4,11 +4,19 @@
 % --- Theorem-like environments ---
 \theoremstyle{plain} % For theorems, lemmas, corollaries, propositions
 \newtheorem{theorem}{Theorem}[section]    % numbered within sections
+
 \newtheorem{lemma}[theorem]{Lemma}
+\crefname{lemma}{lemma}{lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{intuition}[theorem]{Intuition}
 \newtheorem{question}[theorem]{Question}
+
+\newtheorem{claim}[theorem]{Claim}
+\crefname{claim}{claim}{claims}
+\Crefname{claim}{Claim}{Claims}
 
 \theoremstyle{definition} % For definitions, examples, problems
 \newtheorem{definition}[theorem]{Definition}
@@ -17,6 +25,7 @@
 \theoremstyle{remark} % For remarks, notes, etc.
 \newtheorem{remark}[theorem]{Remark}
 
+\newlang{\DD}{DD}
 \newlang{\MAXCUT}{MAX-CUT}
 \newlang{\QUADEQ}{QUADEQ}
 \newlang{\ROSP}{ROSP}
