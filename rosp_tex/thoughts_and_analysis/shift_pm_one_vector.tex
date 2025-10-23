@@ -1,0 +1,117 @@
+In this section, we study a different variant of $\ROSP^\pm$. Let $S$ be the set of symmetric matrices.
+
+\begin{definition}[$\ROSP^\pm$]
+	\begin{equation}
+		\ROSP^\pm := \{M\in\mathbb{R}^{n\times n}\cap S, n\in\mathbb{N}: \exists \alpha\in\mathbb{R}_{\geq 0}, \mathbf{v}\in\{\pm 1\}^n \text{ s.t. } M-\alpha \mathbf{vv}^T \in \DD\}
+	\end{equation}
+\end{definition}
+
+We made the problem slightly easier to study, by allowing the shift vector $\mathbf{v}$ to live in $\{\pm 1\}^n$, instead of $\{-1, 0, 1\}^n$.
+
+In this case, it is possible to prove that $\ROSP^{\pm}\in\NP$-complete.
+
+\begin{theorem}[$\ROSP^{\pm}\in\NP$-complete]
+\label{thm:rosp_pm_one_npc}
+	$3-\SAT \leq \ROSP^{\pm}$.
+\end{theorem}
+
+\begin{proof}
+	$\ROSP^{\pm}$ is clearly in $\NP$, because once you have the correct shift vector $\mathbf{v}$ and $\alpha$, you can check if $M-\alpha \mathbf{vv}^T \in \DD$.
+	
+	\hubi{What about $\alpha$ having polynomial-size bit representation? What if it is an irrational number like $\frac{1}{\sqrt{2}}$?}
+
+	 We first provide the reduction $R: \Phi \to \mathbb{R}^{n \times n}, n\in\mathbb{N}$ showing $ 3-\SAT\leq_m^p \ROSP^{\pm}$---with $\Phi$ we denote the set of all 3-$\SAT$ instances.
+	 
+	 Let $sign(j,i)$ be the function that reports the sign $\pm 1$ of variable $x_j$ in clause $C_i$ in case $x_j\in C_i$. When $x_j\notin C_i$ then $sign(j,i)$ is simply undefined.
+	 
+	 Given a formula $\phi\in\Phi$ with $n$ variables $(x_1, \dots, x_n)$ and $m$ 3-clauses $(C_1, \dots, C_m)$, the reduction $R(\phi)$ produces the following matrix $M^\phi$.
+	 
+	 \begin{enumerate}
+	 	\item $f = \max(m, n+3)$. In case $f>m$, then repeat clause $C_m$ for $f-m+1$ times so that we have $C_{f+1}$ clauses.
+	 	\item $M^\phi\in\mathbb{N}^{n+f+1 \times n + f + 1}$.
+	 	\item $M^\phi_{i,i} = 2f + n +1$, $\forall i \in \{1, \dots, n\}$.
+	 	\item $M^\phi_{i,j} = 0$, $\forall i\neq j \in \{1, \dots, n\}$.
+	 	\item $M^\phi_{i,i} = n+2$, $\forall i\in\{n+1, \dots, n+f+1\}$.
+	 	\item $M^\phi_{i,j} = 1$, $\forall i\neq j \in\{n+1, \dots, n+f+1\}$.
+		\item $M^\phi_{i,j} = 0$, $\forall i > n, j \leq n, x_j \notin C_i$.
+		\item $M^\phi_{i,j} = sign(j,i)$, $\forall i > n, j\leq n, x_j \in C_i$. 
+		\item $M^\phi_{i,j} = M_{j,i}$, $\forall i \leq n, j > n$.
+	 \end{enumerate}
+	 
+	 To give an example, let $\phi = (x_1 \lor \neg x_2\lor x_3) \land  (\neg x_1 \lor x_2\lor x_4) \land  (\neg x_2 \lor \neg x_3 \lor x_4)$, so that $n=4, m=3, f=7$, and
+	 \begin{equation}
+	 	R(\phi) = M^\phi = \begin{bmatrix}
+	 		19 & 0 & 0 & 0 & 1 & -1 & 0 & 0 & \dots \\
+	 		0 & 19 & 0 & 0 & -1 & 1 & -1 & -1 & \dots \\
+	 		 0 & 0 & 19 & 0 & 1 & 0 & -1 & -1 & \dots\\
+	 		 0 & 0 & 0 & 19 & 0 & 1 & 1 & 1 & \dots\\
+ 	 		 1 & -1 & 1 & 0 & 5 & 1 & 1 & 1 & \dots\\
+ 	 		 -1 & 1 & 0 & 1 & 1 & 5 & 1 & 1 & \dots\\
+  	 		 0 & -1 & -1 & 1 & 1 & 1 & 5 & 1 & \dots\\
+ 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & 5 & \dots\\
+ 	 		 \vdots & \vdots & & & & & & & \vdots \\
+ 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & \dots & 5\\
+	 	\end{bmatrix}
+	 \end{equation}
+	 
+	 Now we show the following claims:
+	 \begin{claim}
+	 	The matrix $M^\phi \in S$---i.e., it is symmetric.
+	 \end{claim}
+	 
+	 The above claim is true by construction.
+	 
+	 \begin{claim}
+	 \label{claim:phi_sat_implies_M_rosp}
+	 	If $\phi\in\SAT \implies M^\phi \in \ROSP^{\pm}$.
+	 \end{claim}
+	 
+	 \begin{claim}
+	 	\label{claim:phi_unsat_implies_M_not_rosp}
+	 	If $\phi\notin\SAT \implies M^\phi \notin \ROSP^{\pm}$.
+	 \end{claim}
+	 
+	 With the following claims in place, since $R$ is a polynomial reduction s.t. $\phi\in\SAT \iff R(\phi)\in\ROSP^{\pm}$, the proof of \Cref{thm:rosp_pm_one_npc} is complete.
+\end{proof}
+
+We will now proceed to prove the above \Cref{claim:phi_sat_implies_M_rosp,claim:phi_unsat_implies_M_not_rosp}. Before doing it, it is useful to prove the folliwng \Cref{lemma:alpha_0_1}:
+
+\begin{lemma}
+	\label{lemma:alpha_0_1}
+	When $M^\phi$ is produced using reduction $R$, then $\alpha\in[0,1]$.
+\end{lemma}
+\begin{proof}
+	Since the only elements larger than 1 are on the diagonal of $M^\phi$, and all the entries offdiagonal are in $\{-1, 0, 1\}$, having $\alpha>1$ would produce a shift which is less convenient than having $\alpha=1$.
+	
+	In fact, $\forall i\neq j$:
+	\begin{itemize}
+		\item If $M^\phi_{i,j} = 0$, it must hold that $|v_i v_j| = 1$, and having $\alpha > 1$ we get that $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha > |M^\phi_{i,j} - 1 v_i v_j| = 1$.
+
+		\item If $M^\phi_{i,j} = v_i v_j$, then when $\alpha > 1$ we get $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha - 1 > |M^\phi_{i,j} - v_i v_j| = 0$.
+
+		\item If $M^\phi_{i,j} = - v_i v_j$, then when $\alpha > 1$ we get $|M^\phi_{i,j} - \alpha v_i v_j| = 1 + \alpha > |M^\phi_{i,j} - v_i v_j| = 2$.
+	\end{itemize}
+	
+	In case of the entries on the diagonal, $M^\phi_{i,i} - \alpha v_i v_i < M^\phi_{i,i} - v_i v_i$ when $\alpha> 1$. So, the diagonal dominance of matrix $M^\phi - \alpha \mathbf{v v}^T$ for $\alpha>1$ can always get improved by picking $\alpha=1$.
+\end{proof}
+
+\begin{proof}[Proof of \Cref{claim:phi_sat_implies_M_rosp}]
+	Assume it exists an assignment for variables $(x_1, \dots, x_n)$ (let the certificate be $(s_1, \dots, s_n)$, where $s_i\in\{\pm 1\}$ according to the truth value of variable $x_i$) s.t. the formula $\phi\in\SAT$. Then, it is enough to assign $\mathbf{v}=\{s_1, \dots, s_n, 1, \dots, 1\}$ and $\alpha = 1$. We claim such a $\mathbf{v}$ is a valid rank one shift for matrix $M^\phi$.
+	
+	For rows $i\in\{1, \dots, n\}$, it holds that:
+	\begin{align}
+		M^\phi_{i,i} - v_i^2 - \sum_{j<n\neq i}|M^\phi_{i,j} - v_i v_j |  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
+		2f + 1 + n - 1 - \sum_{j<n\neq i}|0 - v_i v_j |  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
+		2f + 1 + n - 1 - (n-1)  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| \geq \\
+		2f + 1  - 2f > & 0
+	\end{align}
+	
+	So, the diagonally dominance condition is met.
+	
+	
+\end{proof}
+
+\begin{proof}[Proof of \Cref{claim:phi_unsat_implies_M_not_rosp}]
+	bla
+\end{proof}
+
