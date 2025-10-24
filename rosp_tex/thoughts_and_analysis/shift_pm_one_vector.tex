@@ -12,45 +12,49 @@ In this case, it is possible to prove that $\ROSP^{\pm}\in\NP$-complete.
 
 \begin{theorem}[$\ROSP^{\pm}\in\NP$-complete]
 \label{thm:rosp_pm_one_npc}
-	$3-\SAT \leq \ROSP^{\pm}$.
+	$\EThreeSAT \leq \ROSP^{\pm}$.
 \end{theorem}
+
+We define $\EThreeSAT$ as the set of 3-CNF formulas, where all clauses have exactly three distinct literals. \hubi{I didn't check it, but I think it is safe to assume that $\EThreeSAT\in\NP$-complete.}
 
 \begin{proof}
 	$\ROSP^{\pm}$ is clearly in $\NP$, because once you have the correct shift vector $\mathbf{v}$ and $\alpha$, you can check if $M-\alpha \mathbf{vv}^T \in \DD$.
 	
 	\hubi{What about $\alpha$ having polynomial-size bit representation? What if it is an irrational number like $\frac{1}{\sqrt{2}}$?}
 
-	 We first provide the reduction $R: \Phi \to \mathbb{R}^{n \times n}, n\in\mathbb{N}$ showing $ 3-\SAT\leq_m^p \ROSP^{\pm}$---with $\Phi$ we denote the set of all 3-$\SAT$ instances.
+	 We first provide the reduction $R: \Phi \to \mathbb{R}^{n \times n}, n\in\mathbb{N}$ showing $ \EThreeSAT \leq_m^p \ROSP^{\pm}$---with $\Phi$ we denote the set of all $\EThreeSAT$ instances.
+	 
+	 Given a formula $\phi\in\Phi$ with $n$ variables $(x_1, \dots, x_n)$ and $m$ 3-clauses $(C_1, \dots, C_m)$, let $(C_i^1, C_i^2, C_i^3)$ be the indices in $\{1, \dots, n\}^3$ of the three distinct variables in $C_i$. We will also use the shortcut $x_j \in C_i$ or more directly $j\in C_i$ to say that variable $x_j$ is present in clause $C_i$ with any sign.
 	 
 	 Let $sign(j,i)$ be the function that reports the sign $\pm 1$ of variable $x_j$ in clause $C_i$ in case $x_j\in C_i$. When $x_j\notin C_i$ then $sign(j,i)$ is simply undefined.
 	 
-	 Given a formula $\phi\in\Phi$ with $n$ variables $(x_1, \dots, x_n)$ and $m$ 3-clauses $(C_1, \dots, C_m)$, the reduction $R(\phi)$ produces the following matrix $M^\phi$.
+	 Then, the reduction $R(\phi)$ produces the following matrix $M^\phi$.
 	 
 	 \begin{enumerate}
-	 	\item $f = \max(m, n+3)$. In case $f>m$, then repeat clause $C_m$ for $f-m+1$ times so that we have $C_{f+1}$ clauses.
+	 	\item $f = \max(m, 2n+7)$. In case $f>m$, then repeat clause $C_m$ for $f-m+1$ times so that we have $C_{f+1}$ clauses.
 	 	\item $M^\phi\in\mathbb{N}^{n+f+1 \times n + f + 1}$.
-	 	\item $M^\phi_{i,i} = 2f + n +1$, $\forall i \in \{1, \dots, n\}$.
+	 	\item $M^\phi_{i,i} = 2f + n +3$, $\forall i \in \{1, \dots, n\}$.
 	 	\item $M^\phi_{i,j} = 0$, $\forall i\neq j \in \{1, \dots, n\}$.
 	 	\item $M^\phi_{i,i} = n+2$, $\forall i\in\{n+1, \dots, n+f+1\}$.
 	 	\item $M^\phi_{i,j} = 1$, $\forall i\neq j \in\{n+1, \dots, n+f+1\}$.
-		\item $M^\phi_{i,j} = 0$, $\forall i > n, j \leq n, x_j \notin C_i$.
-		\item $M^\phi_{i,j} = sign(j,i)$, $\forall i > n, j\leq n, x_j \in C_i$. 
+		\item $M^\phi_{i,j} = 0$, $\forall i > n, j \leq n, x_j \notin C_{i-n}$.
+		\item $M^\phi_{i,j} = sign(j,i-n)$, $\forall i > n, j\leq n, x_j \in C_{i-n}$. 
 		\item $M^\phi_{i,j} = M_{j,i}$, $\forall i \leq n, j > n$.
 	 \end{enumerate}
 	 
-	 To give an example, let $\phi = (x_1 \lor \neg x_2\lor x_3) \land  (\neg x_1 \lor x_2\lor x_4) \land  (\neg x_2 \lor \neg x_3 \lor x_4)$, so that $n=4, m=3, f=7$, and
+	 To give an example, let $\phi = (x_1 \lor \neg x_2\lor x_3) \land  (\neg x_1 \lor x_2\lor x_4) \land  (\neg x_2 \lor \neg x_3 \lor x_4)$, so that $n=4, m=3, f=15$, and
 	 \begin{equation}
 	 	R(\phi) = M^\phi = \begin{bmatrix}
-	 		19 & 0 & 0 & 0 & 1 & -1 & 0 & 0 & \dots \\
-	 		0 & 19 & 0 & 0 & -1 & 1 & -1 & -1 & \dots \\
-	 		 0 & 0 & 19 & 0 & 1 & 0 & -1 & -1 & \dots\\
-	 		 0 & 0 & 0 & 19 & 0 & 1 & 1 & 1 & \dots\\
- 	 		 1 & -1 & 1 & 0 & 5 & 1 & 1 & 1 & \dots\\
- 	 		 -1 & 1 & 0 & 1 & 1 & 5 & 1 & 1 & \dots\\
-  	 		 0 & -1 & -1 & 1 & 1 & 1 & 5 & 1 & \dots\\
- 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & 5 & \dots\\
- 	 		 \vdots & \vdots & & & & & & & \vdots \\
- 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & \dots & 5\\
+	 		37 & 0 & 0 & 0 & 1 & -1 & 0 & 0 & \dots & 0 \\
+	 		0 & 37 & 0 & 0 & -1 & 1 & -1 & -1 & \dots & -1\\
+	 		 0 & 0 & 37 & 0 & 1 & 0 & -1 & -1 & \dots  & -1\\
+	 		 0 & 0 & 0 & 37 & 0 & 1 & 1 & 1 & \dots & 1\\
+ 	 		 1 & -1 & 1 & 0 & 5 & 1 & 1 & 1 & \dots & 1\\
+ 	 		 -1 & 1 & 0 & 1 & 1 & 5 & 1 & 1 & \dots & 1\\
+  	 		 0 & -1 & -1 & 1 & 1 & 1 & 5 & 1 & \dots & 1\\
+ 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & 5 & \dots & 1\\
+ 	 		 \vdots & \vdots & & & & & & & \ddots & \vdots\\
+ 	 		 0 & -1 & -1 & 1 & 1 & 1 & 1 & 1 & \dots & 5\\
 	 	\end{bmatrix}
 	 \end{equation}
 	 
@@ -62,56 +66,110 @@ In this case, it is possible to prove that $\ROSP^{\pm}\in\NP$-complete.
 	 The above claim is true by construction.
 	 
 	 \begin{claim}
+	 	The matrix $M^\phi \notin \DD$.
+	 \end{claim}
+	 
+	 This is due to the rows $i\in\{n+1, \dots, n+f+1\}$.
+	 
+	 \begin{question}
+	 	Is $M^\phi \in \PSD$? \hubi{This is not super clear to me. I think it is the case that these matrices are always PSD, but I don't know how to prove it.}
+	 \end{question}
+	 
+	 \begin{claim}
 	 \label{claim:phi_sat_implies_M_rosp}
-	 	If $\phi\in\SAT \implies M^\phi \in \ROSP^{\pm}$.
+	 	If $\phi\in\EThreeSAT \implies M^\phi \in \ROSP^{\pm}$.
 	 \end{claim}
 	 
 	 \begin{claim}
 	 	\label{claim:phi_unsat_implies_M_not_rosp}
-	 	If $\phi\notin\SAT \implies M^\phi \notin \ROSP^{\pm}$.
+	 	If $\phi\notin\EThreeSAT \implies M^\phi \notin \ROSP^{\pm}$.
 	 \end{claim}
 	 
-	 With the following claims in place, since $R$ is a polynomial reduction s.t. $\phi\in\SAT \iff R(\phi)\in\ROSP^{\pm}$, the proof of \Cref{thm:rosp_pm_one_npc} is complete.
+	 With the following claims in place, since $R$ is a polynomial reduction s.t. $\phi\in\EThreeSAT \iff R(\phi)\in\ROSP^{\pm}$, the proof of \Cref{thm:rosp_pm_one_npc} is complete.
 \end{proof}
 
-We will now proceed to prove the above \Cref{claim:phi_sat_implies_M_rosp,claim:phi_unsat_implies_M_not_rosp}. Before doing it, it is useful to prove the folliwng \Cref{lemma:alpha_0_1}:
+We will now proceed to prove the above \Cref{claim:phi_sat_implies_M_rosp,claim:phi_unsat_implies_M_not_rosp}. Before doing so, it is useful to prove the folliwng \Cref{lemma:alpha_0_1}:
 
 \begin{lemma}
 	\label{lemma:alpha_0_1}
-	When $M^\phi$ is produced using reduction $R$, then $\alpha\in[0,1]$.
+	When $M^\phi$ is produced using reduction $R$, then we can always assume $\alpha\in[0,1]$.
 \end{lemma}
 \begin{proof}
-	Since the only elements larger than 1 are on the diagonal of $M^\phi$, and all the entries offdiagonal are in $\{-1, 0, 1\}$, having $\alpha>1$ would produce a shift which is less convenient than having $\alpha=1$.
+	Since the only elements larger than 1 are on the diagonal of $M^\phi$, and all the entries offdiagonal are in $\{-1, 0, 1\}$, having $\alpha>1$ would produce a shift which is less convenient (with the goal of having $M^\phi - \alpha \mathbf{vv}^T \in \DD$) than having $\alpha=1$.
 	
-	In fact, $\forall i\neq j$:
+	In fact, $\forall i\neq j$ (namely, on all offidagonal entries):
 	\begin{itemize}
-		\item If $M^\phi_{i,j} = 0$, it must hold that $|v_i v_j| = 1$, and having $\alpha > 1$ we get that $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha > |M^\phi_{i,j} - 1 v_i v_j| = 1$.
+		\item If $M^\phi_{i,j} = 0$, since it holds hold that $|v_i v_j| = 1$, by having $\alpha > 1$ we get that $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha > |M^\phi_{i,j} - 1 v_i v_j| = 1$.
 
-		\item If $M^\phi_{i,j} = v_i v_j$, then when $\alpha > 1$ we get $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha - 1 > |M^\phi_{i,j} - v_i v_j| = 0$.
+		\item If $M^\phi_{i,j} = v_i v_j$, then, when $\alpha > 1$, we get $|M^\phi_{i,j} - \alpha v_i v_j| = \alpha - 1 > |M^\phi_{i,j} - v_i v_j| = 0$.
 
-		\item If $M^\phi_{i,j} = - v_i v_j$, then when $\alpha > 1$ we get $|M^\phi_{i,j} - \alpha v_i v_j| = 1 + \alpha > |M^\phi_{i,j} - v_i v_j| = 2$.
+		\item If $M^\phi_{i,j} = - v_i v_j$, then, when $\alpha > 1$, it holds $|M^\phi_{i,j} - \alpha v_i v_j| = 1 + \alpha > |M^\phi_{i,j} - v_i v_j| = 2$.
 	\end{itemize}
 	
-	In case of the entries on the diagonal, $M^\phi_{i,i} - \alpha v_i v_i < M^\phi_{i,i} - v_i v_i$ when $\alpha> 1$. So, the diagonal dominance of matrix $M^\phi - \alpha \mathbf{v v}^T$ for $\alpha>1$ can always get improved by picking $\alpha=1$.
+	In case of the entries on the diagonal, $\alpha > 1 \implies$ $M^\phi_{i,i} - \alpha v_i v_i < M^\phi_{i,i} - v_i v_i$. So, the diagonal dominance of matrix $M^\phi - \alpha \mathbf{v v}^T$ for $\alpha>1$ is always improved by picking $\alpha=1$.
 \end{proof}
 
 \begin{proof}[Proof of \Cref{claim:phi_sat_implies_M_rosp}]
-	Assume it exists an assignment for variables $(x_1, \dots, x_n)$ (let the certificate be $(s_1, \dots, s_n)$, where $s_i\in\{\pm 1\}$ according to the truth value of variable $x_i$) s.t. the formula $\phi\in\SAT$. Then, it is enough to assign $\mathbf{v}=\{s_1, \dots, s_n, 1, \dots, 1\}$ and $\alpha = 1$. We claim such a $\mathbf{v}$ is a valid rank one shift for matrix $M^\phi$.
+	Assume it exists a certificate $(s_1, \dots, s_n)$, $s_i\in\{\pm 1\}$ according to the truth value of variable $x_i$, such that the formula $\phi\in\EThreeSAT$. Then, it is enough to use $\mathbf{v}=\{s_1, \dots, s_n, 1, \dots, 1\}$ and $\alpha = 1$ in order to have $M^\phi - \alpha \mathbf{vv}^T\in\DD$ (and, hence, $M^\phi\in\ROSP^\pm$). We now show that $\mathbf{vv}^T$ is a valid rank-one shift for matrix $M^\phi$.
 	
-	For rows $i\in\{1, \dots, n\}$, it holds that:
+	For rows $i\in\{1, \dots, n\}$, we check that the diagonally dominance condition is met:
 	\begin{align}
+		M^\phi_{i,i} - v_i^2 - \sum_{j \neq i} |M^\phi_{i,j}  - \alpha v_i v_j| = & \\
 		M^\phi_{i,i} - v_i^2 - \sum_{j<n\neq i}|M^\phi_{i,j} - v_i v_j |  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
-		2f + 1 + n - 1 - \sum_{j<n\neq i}|0 - v_i v_j |  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
-		2f + 1 + n - 1 - (n-1)  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| \geq \\
-		2f + 1  - 2f > & 0
+		2f + n + 3 - 1 - \sum_{j<n\neq i}|0 - v_i v_j |  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
+		2f + n + 2 - (n-1)  - \sum_{j>n}^{n+f+1} |M^\phi_{i,j} - v_i v_j| \geq \\
+		2f + 3  - 2(f+1) > & 0
 	\end{align}
 	
-	So, the diagonally dominance condition is met.
+	For rows $i\in\{n+1, \dots, n+f+1\}$, instead, it holds that $v_i=1$ by construction, and:
 	
+	\begin{align}
+		M^\phi_{i,i} - v_i^2 - \sum_{j \neq i} |M^\phi_{i,j}  - \alpha v_i v_j| = & \\
+		M^\phi_{i,i} - v_i^2 - \sum_{j\leq n}|M^\phi_{i,j} - v_i v_j |  - \sum_{j>n \land i\neq j}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
+		n+ 1 - \sum_{j\leq n \land j\in C_{i-n}} |M^\phi_{i,j} - v_i v_j| - \sum_{j \leq n \land j\notin  C_{i-n}} |M^\phi_{i,j} - v_i v_j| - \sum_{j>n, j\neq i}^{n+f+1} |M^\phi_{i,j} - v_i v_j| = & \\
+		n + 1 -  \sum_{j\in C_{i-n}} |M_{i,j} - v_i v_j| - (n-3) - 0 \geq & \label{eq:exactly_n_min_3_vars_notin_clause} \\ 
+		4 - 4 \geq & 0 \label{eq:at_least_one_true_in_every_clause}
+	\end{align}
 	
+	\Cref{eq:exactly_n_min_3_vars_notin_clause} is due to the fact that we are dealing with $\EThreeSAT$, so $\sum_{j \leq n \land j\notin  C_{i-n}} |M^\phi_{i,j} - v_i v_j| = n- 3$.
+	
+	\Cref{eq:at_least_one_true_in_every_clause}, instead, is true because, out of the three variables in $C_{i-n}$, there must be at least one $k\in C_{i-n}$ which is assigned sign exacly $s_k = sign(k,i-n)$ (or the clause would be false). So, for $i>n$ and such $k$ as above, $v_i v_k = 1 \cdot sign(k,i-n)$, and $|M^\phi_{i,k} - v_i v_k| = 0$. For the other $j'\neq k\in C_{i-n}$, it holds $|M^\phi_{i,j'} - v_i v_{j'}| \in \{0, 2\}$. So, $ \sum_{j\in C_{i-n}} |M_{i,j} - v_i v_j| \leq 2 + 2 + 0 = 4$.
+	
+	Since, for both $i\leq n$ and $i > n$ the diagonally dominance condition is met, this concludes the proof $\phi\in\EThreeSAT\implies R(\phi)\in\ROSP^\pm$.	
 \end{proof}
 
 \begin{proof}[Proof of \Cref{claim:phi_unsat_implies_M_not_rosp}]
-	bla
+	The first claim is that the vector $\mathbf{v}$ and $-\mathbf{v}$ produce the same shift (namely, $\mathbf{vv}^T = \mathbf{(-v)(-v)}^T$). So, every time we claim that a variable $v_i$ needs to be 1, this is without loss of generality (we could just flip the entire vector and repeat the same argument).
+
+	Without loss of generality, we claim that $v_i=1, \forall i\in \{n+1, \dots, n+f+1\}$ (equivalently, $v_i=-1, \forall i\in \{n+1, \dots, n+f+1\}$ as mentioned above). 
+	
+	Assume by contradiction that it is not the case. Then, there is a row $i > n$ where $\sum_{j>n, j\neq i} v_i v_j \leq 0$ (namely, at least half the entries $v_j$, for $j\neq i$ and $j>n$, have different sign than $v_i$). This implies that $\sum_{j>n,j\neq i}^{n+f+1} |M^\phi_{i,j} - \alpha v_i v_j| \geq \frac{f}{2} (1 + \alpha)$.
+	
+	On such a row $i$, we have that the diagonal dominance condition is:
+	
+	\begin{align}
+		M^\phi_{i,i} - \alpha v_i^2 - \sum_{j\leq n}|M^\phi_{i,j} - \alpha v_i v_j |  - \sum_{j>n\land j\neq i}^{n+f+1} |M^\phi_{i,j} - \alpha v_i v_j| \leq  & \\
+		n+2 - \alpha - \sum_{j\notin C_{i-n} \land j\leq n}|M^\phi_{i,j} - \alpha v_i v_j |  - \sum_{j>n \land j\neq i}^{n+f+1}|M^\phi_{i,j} - \alpha v_i, v_j| \leq & \\
+		n + 2 - \alpha - (n-3) \alpha - \frac{f}{2}(1 + \alpha)  \leq  & \\
+		n + 2 - \alpha n + 2 \alpha -\frac{2n+7}{2} (1+\alpha) = & \\
+		n(1 - \alpha - 1 - \alpha) + 2 + 2\alpha - \frac{7}{2}(1+\alpha)  = & \\
+		-2n\alpha -\frac{3}{2} - \frac{3}{2}\alpha < & 0, \forall \alpha \in [0, 1]
+	\end{align}
+	
+	The above series of inequalities is saying that, regardless the value of $\alpha\in[0,1]$, it must hold that $v_k = 1$ for all $k\in\{n+1, \dots, n+f+1\}$; otherwise, there would be some row $i\in\{n+1, \dots, n+f+1\}$ such that, using as shift a vector with values on $v_k$ other than 1, the diagonally dominance condition would not be met.
+
+	To conclude, assume $\phi\notin \EThreeSAT$. Then, for every assignment $\mathbf{v}\in\{\pm 1\}^{n+f+1}$, it must exist at least a clause $C_r$ s.t., for every $j\in C_r$, $v_j \neq sign(j,r)$.
+	
+	On such a row $i = r+n \in\{n+1, \dots, n+f+1\}$, the diagonally dominance condition would be:
+	
+	\begin{align}
+		M^\phi_{i,i} - \alpha v_i^2 - \sum_{j<n}|M^\phi_{i,j} - \alpha v_i v_j |  - \sum_{j>n\land j\neq i}^{n+f+1} |M^\phi_{i,j} - \alpha v_i v_j| =  & \\
+		n+2 - \alpha - \sum_{j<n  \land j\notin C_{i-n}}|M^\phi_{i,j} - \alpha v_i v_j | - \sum_{j < n \land j\in C_{i-n}}|M^\phi_{i,j} - v_i v_j| - f(1-\alpha) \leq & \\
+		n+2 - \alpha - (n-3)\alpha - 3 (1+\alpha) - (2n + 7)(1-\alpha) = & \\
+		n(1 - \alpha -2 + 2 \alpha) + 2 - \alpha + 3\alpha - 3 - 3\alpha - 7 + 7 \alpha = & \\
+		n(\alpha - 1) + (-8 + 6 \alpha ) < & 0	
+	\end{align}
+	
+	Since we have proved that, if $\phi\notin\EThreeSAT$, then there cannot exist any shift $\mathbf{vv}^T$ to turn $R(\phi)=M^\phi$ into a diagonally dominant matrix, this concludes the proof.
 \end{proof}
 
