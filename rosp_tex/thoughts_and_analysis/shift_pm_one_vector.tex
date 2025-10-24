@@ -177,5 +177,5 @@ We will now proceed to prove the above \Cref{claim:phi_sat_implies_M_rosp,claim:
 	Since we have proved that, if $\phi\notin\EThreeSAT$, then for every vector $\mathbf{v}\in\{\pm 1\}^{n+f+1}$ and $\alpha \in [0,1]$, the matrix $M^\phi - \alpha \mathbf{vv}^T$ has at least one row where the diagonally dominant condition is not respected, this concludes the proof.
 \end{proof}
 
-\hubi{I have a terrible feeling that there might be something wrong: what about the vector $\mathbf{v} = 1^{n+f+1}$? I think the all-one shift works well, as long as there is no clause with three negative literals! But then maybe this is a bit weak!}
+\hubi{I have a terrible feeling that there might be something wrong: what about the vector $\mathbf{v} = 1^{n+f+1}$? I think the all-one shift works well, as long as there is no clause with three negative literals! But then maybe this is a bit weak! Or maybe not, formulae with at least one true literal in every clause are trivially true! So, interesting instances, are the ones where there are some clauses with all three literals true, and some with all three literals false. OKs!:)}
 
