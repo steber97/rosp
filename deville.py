@@ -60,6 +60,9 @@ def brauers_lb(M: np.array) -> float:
 def shifted_gershgorin_lb(M: np.array) -> float:
     n = len(M)
     x = compute_x(M)
+    if x < -1e-5:
+        print(x, M)
+    assert x > -1e-5
     SM = M - x * np.ones_like(M)
     return gershgorin_lb(SM)
 
@@ -74,22 +77,30 @@ if __name__ == "__main__":
     values = []
     for att in range(attempts):
         range_values = [0,11]  # inclusive, exclusive
+        sign_perc = 0
         M = np.random.randint(np.ones(n**2) * range_values[0], np.ones(n**2) * range_values[1]).reshape(n, n)
         # Make it symmetric.
         for i in range(n):
             for j in range(i):
-                M[i][j] = M[j][i]
-
+                if np.random.rand() < sign_perc:
+                    M[j,i] = -M[j,i]
+                M[i,j] = M[j,i]
+        if att == 0:
+            print(M)
+        
         g_lb.append(gershgorin_lb(M))
         sg_lb.append(shifted_gershgorin_lb(M))
         b_lb.append(brauers_lb(M))
         eigvals.append(np.linalg.eig(M)[0].min())
         values.append((g_lb[-1], sg_lb[-1], b_lb[-1], eigvals[-1]))
-    print(values[0])
+    
     values = sorted(values, key=lambda x: x[2])
 
+    legend_names = ['gersh', 'sgers', 'brauer', 'eigv']
     for j in range(4):
-        plt.plot([i for i in range(attempts)], [values[i][j] for i in range(attempts)])
+        plt.plot([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j])
+        plt.ylabel("a")
+    plt.legend()
     plt.show()
 
 
