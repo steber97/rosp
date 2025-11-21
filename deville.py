@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
+from typing import Tuple
 
 from utils import EPS
+import greedy_pm_shift
 
 def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
     """
@@ -14,7 +16,7 @@ def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
     dd = [SM[i,i] - np.sum(np.abs(np.concatenate([SM[i, :i], SM[i, i+1:]]))) for i in range(n)]
     return min(dd)
 
-def maximize_gershgoryn_circle(M, v, bracket=(-10, 10)):
+def maximize_gershgoryn_circle(M, v):
     # maximize f by minimizing -f(x)
     res = minimize_scalar(lambda x: -gap_diagonally_dominance(x, M, v), bounds=[0, np.max(M)])
     return res.x, gap_diagonally_dominance(res.x, M, v)
@@ -90,25 +92,31 @@ def deville_lb(M: np.array) -> float:
     return gershgorin_lb(SM)
 
 
+def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_perc: float):
+    M = np.random.randint(np.ones(n**2) * range_values[0], np.ones(n**2) * range_values[1]).reshape(n, n)
+    # Make it symmetric.
+    for i in range(n):
+        for j in range(i):
+            if np.random.rand() < sign_perc:
+                M[j,i] = -M[j,i]
+            M[i,j] = M[j,i]
+    return M
+
 if __name__ == "__main__":
     
-    n = 10
-    attempts = 10
+    n = 5
+    attempts = 1000
+    range_values = (0,11)  # inclusive, exclusive
+    sign_perc = 0.5
+        
     g_lb = []
     d_lb = []
     b_lb = []
+    pm_lb = []
     eigvals = []
     values = []
     for att in range(attempts):
-        range_values = [0,11]  # inclusive, exclusive
-        sign_perc = 0.6
-        M = np.random.randint(np.ones(n**2) * range_values[0], np.ones(n**2) * range_values[1]).reshape(n, n)
-        # Make it symmetric.
-        for i in range(n):
-            for j in range(i):
-                if np.random.rand() < sign_perc:
-                    M[j,i] = -M[j,i]
-                M[i,j] = M[j,i]
+        M = create_rand_symmetric_matrix(n, range_values, sign_perc)
         if att == 0:
             print(M)
         
@@ -116,14 +124,15 @@ if __name__ == "__main__":
         d_lb.append(deville_lb(M))
         b_lb.append(brauers_lb(M))
         eigvals.append(np.linalg.eig(M)[0].min())
-        values.append((g_lb[-1], d_lb[-1], b_lb[-1], eigvals[-1]))
+        pm_lb.append(greedy_pm_shift.shift_as_max_direction(M))
+        values.append((g_lb[-1], d_lb[-1], b_lb[-1], eigvals[-1], pm_lb[-1]))
     
     values = sorted(values, key=lambda x: x[2])
 
-    legend_names = ['gersh', 'dev', 'brauer', 'eigv']
-    for j in range(4):
+    legend_names = ['gersh', 'dev', 'brauer', 'eigv', 'greedy_pm']
+    for j in range(5):
         plt.plot([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j])
-        plt.ylabel("a")
+        plt.ylabel("lowest eigenvalue")
     plt.legend()
     plt.show()
 
