@@ -1,5 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize_scalar
+
+from utils import EPS
+
+def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
+    """
+    Compute the max dd-gap on any row of M, when applying the shift x * vv^T.
+    """
+    n = len(v)
+    assert len(M) == n and x >= -EPS
+    SM = M - x * np.outer(v, v)
+    dd = [SM[i,i] - np.sum(np.abs(np.concatenate([SM[i, :i], SM[i, i+1:]]))) for i in range(n)]
+    return min(dd)
+
+def maximize_gershgoryn_circle(M, v, bracket=(-10, 10)):
+    # maximize f by minimizing -f(x)
+    res = minimize_scalar(lambda x: -gap_diagonally_dominance(x, M, v), bounds=[0, np.max(M)])
+    return res.x, gap_diagonally_dominance(res.x, M, v)
 
 def delta_i_k(M: np.array, i: int, k: int) -> float:
     """
@@ -34,13 +52,13 @@ def compute_x(M: np.array) -> float:
     Corollary 3.5 of paper
     """
     n = len(M)
-    Q = [(k, l) for k in range(n) for l in range(n) if k < n//2 and l >= n//2 and s_k(M, l) >= s_k(M, k)]
+    Q = [(k, l) for k in range(1, n+1) for l in range(1, n+1) if k <= (n/2) and l > (n/2) and s_k(M, l-1) >= s_k(M, k-1) - EPS]
     if len(Q) == 0:
         # No way to improve it.
         return 0.0
-    min_l_k = np.argmin([((n//2 - 1 - k)*s_k(M, l) + (l - (n//2 - 1)))/(l-k) for (k, l) in Q])
+    min_l_k = np.argmin([((n/2 - k) * s_k(M, l-1) + (l - n/2) * s_k(M, k-1))/(l-k) for (k, l) in Q])
     l, k = Q[min_l_k]
-    x = (s_k(M, l) - s_k(M, k))/(2*(l-k))
+    x = (s_k(M, l-1) - s_k(M, k-1))/(2*(l-k))
     return x
 
 def gershgorin_lb(M: np.array) -> float:
@@ -57,27 +75,33 @@ def brauers_lb(M: np.array) -> float:
     n = len(M)
     return np.min([((M[i,i] + M[j,j]) / 2) - (np.sqrt((M[i,i] - M[j,j])**2 + R_i(M, i) * R_i(M, j))) for i in range(n) for j in range(n) if i != j])
 
-def shifted_gershgorin_lb(M: np.array) -> float:
+def deville_lb(M: np.array) -> float:
     n = len(M)
     x = compute_x(M)
-    if x < -1e-5:
-        print(x, M)
-    assert x > -1e-5
-    SM = M - x * np.ones_like(M)
+    x_2, min_gersh_circle = maximize_gershgoryn_circle(M, np.ones(n))
+    
+    # Here it looks that x_2 optimized using the optimizer is better for some reason? :/
+    # if np.abs(gap_diagonally_dominance(x_2, M, np.ones(n)) - gap_diagonally_dominance(x, M, np.ones(n)))>EPS:
+    #     print(x, x_2)
+    #     print(gap_diagonally_dominance(x, M, np.ones(n)), gap_diagonally_dominance(x_2  , M, np.ones(n)))
+    
+    SM = M - x_2 * np.ones_like(M)
+    assert gershgorin_lb(SM) >= gershgorin_lb(M) - EPS
     return gershgorin_lb(SM)
 
 
 if __name__ == "__main__":
-    n = 5
-    attempts = 1000
+    
+    n = 10
+    attempts = 10
     g_lb = []
-    sg_lb = []
+    d_lb = []
     b_lb = []
     eigvals = []
     values = []
     for att in range(attempts):
         range_values = [0,11]  # inclusive, exclusive
-        sign_perc = 0
+        sign_perc = 0.6
         M = np.random.randint(np.ones(n**2) * range_values[0], np.ones(n**2) * range_values[1]).reshape(n, n)
         # Make it symmetric.
         for i in range(n):
@@ -89,14 +113,14 @@ if __name__ == "__main__":
             print(M)
         
         g_lb.append(gershgorin_lb(M))
-        sg_lb.append(shifted_gershgorin_lb(M))
+        d_lb.append(deville_lb(M))
         b_lb.append(brauers_lb(M))
         eigvals.append(np.linalg.eig(M)[0].min())
-        values.append((g_lb[-1], sg_lb[-1], b_lb[-1], eigvals[-1]))
+        values.append((g_lb[-1], d_lb[-1], b_lb[-1], eigvals[-1]))
     
     values = sorted(values, key=lambda x: x[2])
 
-    legend_names = ['gersh', 'sgers', 'brauer', 'eigv']
+    legend_names = ['gersh', 'dev', 'brauer', 'eigv']
     for j in range(4):
         plt.plot([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j])
         plt.ylabel("a")

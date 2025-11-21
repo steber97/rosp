@@ -1,5 +1,7 @@
 import numpy as np
 
+EPS = 1e-3
+
 def zero_one_with_probability(prob = 0.5):
     if np.random.rand() <= prob:
         return 1
