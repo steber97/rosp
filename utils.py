@@ -172,6 +172,8 @@ class PiecewiseFunction:
         assert len(segments) >= 2
         assert segments[0].p1 is None
         assert segments[-1].p2 is None 
+        assert self.check_continuous()
+        assert self.check_concave()
 
     def check_continuous(self) -> bool:
         """
@@ -241,7 +243,6 @@ class PiecewiseFunction:
                 xs.append(seg.p2.x)
                 ys.append(seg.p2.y)
         plt.plot(xs, ys)
-        plt.show()
 
 def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFunction:
     """
@@ -259,6 +260,9 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
 
     return None
 
+def y(point: XYPoint, x: float, m: float) -> float:
+    return m * (x - point.x) + point.y
+
 def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> PiecewiseFunction:
     """
     Given 2 piecewise linear functions, defined as point, angular coefficient,
@@ -272,6 +276,22 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
     :param l2: Description
     :return: Description
     """
+
+    def split_piecewise_function(l: PiecewiseFunction, xs: List[float]) -> List[PiecewiseSegment]:
+        segments = [PiecewiseSegment(None, XYPoint(xs[0], y(l.segments[0].p2, xs[0], l.segments[0].m)), l.segments[0].m)]
+        i = 1 if abs(xs[0] - l.segments[0].p2.x) < EPS else 0
+        for j, x in enumerate(xs[:-1]):
+            pt1, pt2, m = l.segments[i].p1, l.segments[i].p2, l.segments[i].m
+            assert pt1 is None or pt1.x <= x or abs(pt1.x - x) < EPS
+            if not(pt2 is None or pt2.x >= xs[j+1] or abs(pt2.x - xs[j+1]) < EPS):
+                raise AssertionError
+            pt = pt1 if pt1 is not None else pt2
+            segments.append(PiecewiseSegment(XYPoint(x, y(pt, x, m)), XYPoint(xs[j+1], y(pt, xs[j+1], m)), m))
+            if pt2 is not None and abs(xs[j+1] - pt2.x) < EPS:
+                i += 1
+        segments.append(PiecewiseSegment(XYPoint(xs[-1], y(l.segments[-1].p1, xs[-1], l.segments[-1].m)), None, l.segments[-1].m))
+        return segments
+
     xs = []
     i = 1
     j = 1
@@ -286,12 +306,18 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
         else:
             xs.append(l2.segments[j].p1.x)
             j += 1
+        
     xs += [s.p1.x for s in l1.segments[i:]]
     xs += [s.p1.x for s in l2.segments[j:]]
 
+    seg1 = split_piecewise_function(l1, xs)
+    seg2 = split_piecewise_function(l2, xs)
+
     segments = []
-    segments += []  # Broken here.
-    return []
+    for s1, s2 in zip(seg1, seg2):
+        segments += s1.min(s2)
+
+    return PiecewiseFunction(segments)
 
 def binary_search_max(l: PiecewiseFunction) -> float:
     """
@@ -325,12 +351,24 @@ def maximize_x(M: np.array, V: np.array) -> float:
 
 if __name__ == "__main__":
     pt1 = XYPoint(-5, -2)
-    pt2 = XYPoint(-5, 2)
+    pt2 = XYPoint(-4, 2)
     pt3 = XYPoint(0, 3)
-    pt4 = XYPoint(0, 1)
-    sg1 = PiecewiseSegment(pt1, None, -1)
-    sg2 = PiecewiseSegment(pt2, None, -1/5)
-    print(sg1)
-    print(sg2)
-    minseg = sg1.min(sg2)
-    print(minseg)
+    pt4 = XYPoint(3, 1)
+    sg1 = PiecewiseSegment(None, pt1, 4)
+    sg2 = PiecewiseSegment(pt1, pt3, 1)
+    sg3 = PiecewiseSegment(pt3, None, -1)
+
+    sg4 = PiecewiseSegment(None, pt2, 3)
+    sg5 = PiecewiseSegment(pt2, pt4, -1/7)
+    sg6 = PiecewiseSegment(pt4, None, -4)
+
+    f1 = PiecewiseFunction(segments=[sg1, sg2, sg3])
+    f2 = PiecewiseFunction(segments=[sg4, sg5, sg6])
+
+    f1.plot()
+    f2.plot()
+    # plt.show()
+
+    f3 = merge_piecewise_linear(f1, f2)
+    f3.plot()
+    plt.show()
