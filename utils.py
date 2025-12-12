@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-
 import numpy as np
 from typing import Tuple, List
 import matplotlib.pyplot as plt
+from math import inf
 
 EPS = 1e-5
 
@@ -317,7 +317,9 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
     for s1, s2 in zip(seg1, seg2):
         segments += s1.min(s2)
 
-    return PiecewiseFunction(segments)
+    f = PiecewiseFunction(segments)
+    f.shorten()
+    return f
 
 def binary_search_max(l: PiecewiseFunction) -> float:
     """
@@ -331,7 +333,26 @@ def binary_search_max(l: PiecewiseFunction) -> float:
     :rtype: float
     """
     assert l.check_concave()
-    return 0.
+    assert l.check_continuous()
+    low = 0
+    high = len(l.segments) - 1
+    while low < high:
+        mid = (high + low) // 2
+        if abs(l.segments[mid].m) < EPS:
+            return l.segments[mid].p1.x if l.segments[mid].p1 is not None else l.segments[mid].p2.x
+        elif l.segments[mid].m < 0:
+            high = mid
+        else:
+            low = mid + 1
+    assert low == high
+    if abs(l.segments[low].m) < EPS:
+        return l.segments[low].p1.x if l.segments[low].p1 is not None else l.segments[low].p2.x
+    elif l.segments[low].m > 0:
+        return l.segments[low].p2.x if l.segments[low].p2 is not None else inf
+    else:
+        assert l.segments[low].m < 0
+        return l.segments[low].p1.x if l.segments[low].p1 is not None else -inf
+
 
 def maximize_x(M: np.array, V: np.array) -> float:
     merged_pf = [[]] # merged piecewise functions
@@ -350,13 +371,13 @@ def maximize_x(M: np.array, V: np.array) -> float:
 
 
 if __name__ == "__main__":
-    pt1 = XYPoint(-5, -2)
+    pt1 = XYPoint(-1, 2)
     pt2 = XYPoint(-4, 2)
     pt3 = XYPoint(0, 3)
     pt4 = XYPoint(3, 1)
-    sg1 = PiecewiseSegment(None, pt1, 4)
+    sg1 = PiecewiseSegment(None, pt1, 3)
     sg2 = PiecewiseSegment(pt1, pt3, 1)
-    sg3 = PiecewiseSegment(pt3, None, -1)
+    sg3 = PiecewiseSegment(pt3, None, 0.5)
 
     sg4 = PiecewiseSegment(None, pt2, 3)
     sg5 = PiecewiseSegment(pt2, pt4, -1/7)
@@ -370,5 +391,6 @@ if __name__ == "__main__":
     # plt.show()
 
     f3 = merge_piecewise_linear(f1, f2)
+    print("max: {}".format(binary_search_max(f1)))
     f3.plot()
     plt.show()
