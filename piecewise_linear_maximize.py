@@ -26,7 +26,9 @@ class PiecewiseSegment:
         """
         If p1 or p2 are None, it means that the piecewise segment
         goes to or from +- infinity.
-        At least one of them needs to be not none.
+        At least one of them needs to be not None.
+        If the angular coefficient does not correspond to the angular coefficient
+        between points p1 and p2, an error is raised.
         
         :param p1: begin of segment.
         :param p2: end of segment.
@@ -37,10 +39,9 @@ class PiecewiseSegment:
         assert not (p1 is None and p2 is None)
         self.m = m
         if self.p1 is not None and self.p2 is not None:
-            assert p1.x <= p2.x
-            if  abs((p2.x - p1.x) * m + p1.y - p2.y) > EPS:
-                print(self)
-                raise AssertionError
+            assert p1.x <= p2.x and abs(p1.x - p2.x) > EPS
+            assert abs((p2.x - p1.x) * m + p1.y - p2.y) < EPS
+
 
     def __repr__(self):
         return "{}, {}, m = {:.2f}".format(self.p1, self.p2, self.m)
@@ -57,6 +58,8 @@ class PiecewiseSegment:
         :return: A piecewise function (with at most 2 segments) encoding min(self, ps).
         """
         assert ((self.p1 is None and ps.p1 is None) or abs(self.p1.x - ps.p1.x) < EPS) and ((self.p2 is None and ps.p2 is None) or abs(self.p2.x - ps.p2.x) < EPS)
+        if self.p1 is not None and self.p2 is not None:
+            assert self.p1.x < self.p2.x and abs(self.p1.x - self.p2.x) > EPS
         segments = []
         if self.p1 is None and ps.p1 is None:
             assert self.p2 is not None and ps.p2 is not None
@@ -94,7 +97,7 @@ class PiecewiseSegment:
             else:
                 x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
                 y = self.m * (x - self.p1.x) + self.p1.y
-                if x <= self.p1.x:
+                if x <= self.p1.x or abs(x - self.p1.x) < EPS:
                     if self.m < ps.m:
                         segments.append(self)
                     else:
@@ -109,6 +112,7 @@ class PiecewiseSegment:
         else:
             assert self.p1 is not None and self.p2 is not None and ps.p1 is not None and ps.p2 is not None
             assert abs(self.p1.x - ps.p1.x) < EPS and abs(self.p2.x - ps.p2.x) < EPS
+            assert abs(self.p1.x - self.p2.x) > EPS
             if ((self.p1.y < ps.p1.y) or abs(self.p1.y - ps.p1.y) < EPS) and (
                 (self.p2.y < ps.p2.y) or abs(self.p2.y - ps.p2.y) < EPS):
                 segments.append(self)
@@ -119,15 +123,31 @@ class PiecewiseSegment:
                 x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
                 assert self.p1.x < x < self.p2.x
                 newpoint = XYPoint(x, self.m * x - self.m * self.p1.x + self.p1.y)
-                segments.append(PiecewiseSegment(self.p1, newpoint, self.m))
-                segments.append(PiecewiseSegment(newpoint, ps.p2, ps.m)) 
+                if abs(self.p1.x - x) > EPS:
+                    if abs(self.p2.x - x) > EPS:
+                        segments.append(PiecewiseSegment(self.p1, newpoint, self.m))
+                    else:
+                        segments.append(PiecewiseSegment(self.p1, self.p2, self.m))
+                if abs(ps.p2.x - x) > EPS:
+                    if abs(self.p1.x - x) > EPS:
+                        segments.append(PiecewiseSegment(newpoint, ps.p2, ps.m)) 
+                    else:
+                        segments.append(PiecewiseSegment(ps.p1, ps.p2, ps.m))
             else:
                 assert (self.p1.y > ps.p1.y) and (self.p2.y < ps.p2.y)
                 x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
-                assert self.p1.x < self.p2.x
+                assert self.p1.x < x < self.p2.x
                 newpoint = XYPoint(x, self.m * x - self.m * self.p1.x + self.p1.y)
-                segments.append(PiecewiseSegment(ps.p1, newpoint, ps.m))
-                segments.append(PiecewiseSegment(newpoint, self.p2, self.m))
+                if abs(x - ps.p1.x) > EPS:
+                    if abs(x - self.p2.x) < EPS:
+                        segments.append(PiecewiseSegment(ps.p1, self.p2, ps.m))
+                    else:
+                        segments.append(PiecewiseSegment(ps.p1, newpoint, ps.m))
+                if abs(x - ps.p2.x) > EPS:
+                    if abs(x - ps.p1.x) < EPS:
+                        segments.append(PiecewiseSegment(ps.p1, self.p2, self.m))
+                    else:
+                        segments.append(PiecewiseSegment(newpoint, self.p2, self.m))
         return segments
 
 class PiecewiseFunction:
@@ -142,6 +162,8 @@ class PiecewiseFunction:
         assert segments[-1].p2 is None 
         assert self.check_continuous()
         assert self.check_concave()
+        for s in self.segments[1:-1]:
+            assert s.p1.x < s.p2.x and abs(s.p1.x - s.p2.x) > EPS
 
     def check_continuous(self) -> bool:
         """
@@ -161,7 +183,7 @@ class PiecewiseFunction:
         if not self.check_continuous():
             return False
         for i in range(len(self.segments) - 1):
-            if not(self.segments[i].m <= self.segments[i+1].m or abs(self.segments[i].m - self.segments[i+1].m) < 1e-6):
+            if not(self.segments[i].m <= self.segments[i+1].m or abs(self.segments[i].m - self.segments[i+1].m) < EPS):
                 return False
         return True
 
@@ -173,7 +195,7 @@ class PiecewiseFunction:
         if not self.check_continuous():
             return False
         for i in range(len(self.segments) - 1):
-            if not(self.segments[i].m >= self.segments[i+1].m or abs(self.segments[i].m - self.segments[i+1].m) < 1e-6):
+            if not(self.segments[i].m >= self.segments[i+1].m or abs(self.segments[i].m - self.segments[i+1].m) < EPS):
                 return False
         return True
 
@@ -187,7 +209,8 @@ class PiecewiseFunction:
         for i in range(len(self.segments)):
             if len(new_segments) == 0:
                 new_segments.append(self.segments[i])
-            elif abs(new_segments[-1].m - self.segments[i].m) < 1e-6:
+            # Special case: in case it is a straight line, then we still need 2 elements with None at the extremes.
+            elif abs(new_segments[-1].m - self.segments[i].m) < EPS and i != len(self.segments) - 1:
                 new_segments[-1].p2 = self.segments[i].p2
             else:
                 new_segments.append(self.segments[i])
@@ -252,11 +275,15 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
         for i, (a, b, x) in enumerate(abx[:-1]):
             tot_const += 2*a
             tot_x_coeff -= 2*b
-            segments.append(PiecewiseSegment(
-                XYPoint(x, tot_const + x * tot_x_coeff), 
-                XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
-                tot_x_coeff
-            ))
+            # Prevent piecewisesement with empty x-interval.
+            if abs(abx[i+1][2] - x) < EPS:
+                segments[-1].p2.x = abx[i+1][2]
+            else:
+                segments.append(PiecewiseSegment(
+                    XYPoint(x, tot_const + x * tot_x_coeff), 
+                    XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
+                    tot_x_coeff
+                ))
         tot_const += 2*abx[-1][0]
         tot_x_coeff -= 2*abx[-1][1]
         segments.append(PiecewiseSegment(
@@ -265,6 +292,7 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
             tot_x_coeff
         ))
     else:
+        # It is a straight line, but we need to add None at the beginning and at the end.
         segments.append(PiecewiseSegment(
             None,
             XYPoint(0, tot_const),
@@ -327,6 +355,9 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
         
     xs += [s.p1.x for s in l1.segments[i:]]
     xs += [s.p1.x for s in l2.segments[j:]]
+
+    for i in range(len(xs)-1):
+        assert xs[i+1] > xs[i] and abs(xs[i+1] - xs[i]) > EPS
 
     seg1 = split_piecewise_function(l1, xs)
     seg2 = split_piecewise_function(l2, xs)
