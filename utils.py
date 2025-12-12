@@ -279,22 +279,34 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
     segments = []
     abx = [(a_s[j], b_s[j], a_s[j]/b_s[j]) for j, (a, b) in enumerate(zip(a_s, b_s)) if i != j and b_s[j] != 0]
     abx = sorted(abx, key=lambda x: x[2])
-    segments.append(PiecewiseSegment(None, XYPoint(abx[0][2], tot_const + abx[0][2] * tot_x_coeff), tot_x_coeff))
-    for i, (a, b, x) in enumerate(abx[:-1]):
-        tot_const += 2*a
-        tot_x_coeff -= 2*b
+    if len(abx) > 0:
+        segments.append(PiecewiseSegment(None, XYPoint(abx[0][2], tot_const + abx[0][2] * tot_x_coeff), tot_x_coeff))
+        for i, (a, b, x) in enumerate(abx[:-1]):
+            tot_const += 2*a
+            tot_x_coeff -= 2*b
+            segments.append(PiecewiseSegment(
+                XYPoint(x, tot_const + x * tot_x_coeff), 
+                XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
+                tot_x_coeff
+            ))
+        tot_const += 2*abx[-1][0]
+        tot_x_coeff -= 2*abx[-1][1]
         segments.append(PiecewiseSegment(
-            XYPoint(x, tot_const + x * tot_x_coeff), 
-            XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
+            XYPoint(abx[-1][2], tot_const + abx[-1][2] * tot_x_coeff),
+            None,
             tot_x_coeff
         ))
-    tot_const += 2*abx[-1][0]
-    tot_x_coeff -= 2*abx[-1][1]
-    segments.append(PiecewiseSegment(
-        XYPoint(abx[-1][2], tot_const + abx[-1][2] * tot_x_coeff),
-        None,
-        tot_x_coeff
-    ))
+    else:
+        segments.append(PiecewiseSegment(
+            None,
+            XYPoint(0, tot_const),
+            tot_x_coeff
+        ))
+        segments.append(PiecewiseSegment(
+            XYPoint(0, tot_const),
+            None,
+            tot_x_coeff
+        ))
 
     return PiecewiseFunction(segments)
 
@@ -398,14 +410,14 @@ def maximize_x(M: np.array, V: np.array) -> float:
         merged_pf[0].append(create_piecewise_linear(M[i,:], V[i,:], i))
     while len(merged_pf[-1]) > 1:
         new_merged_pf = []
-        for i in range(0, len(merged_pf[-1]), 2):
+        for i in range(0, len(merged_pf[-1])-1, 2):
             new_merged_pf.append(merge_piecewise_linear(merged_pf[-1][i], merged_pf[-1][i+1]))
         if len(merged_pf[-1]) % 2 == 1:
             new_merged_pf.append(merged_pf[-1][-1])
         # Here we can shorten new_merged_points.
         merged_pf.append(new_merged_pf)
     
-    return binary_search_max(merged_pf[-1])
+    return max(0, binary_search_max(merged_pf[-1][0]))
 
 
 if __name__ == "__main__":

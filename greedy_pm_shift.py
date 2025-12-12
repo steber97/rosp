@@ -5,7 +5,7 @@ from utils import EPS
 from deville import maximize_gershgoryn_circle, gershgorin_lb, deville_lb, create_rand_symmetric_matrix
 
 
-def shift_as_max_direction(M: np.array) -> float:
+def shift_as_max_direction(M: np.array, stop_early: bool = False) -> float:
     n = len(M)
     dd = np.array([M[i,i] - np.sum(np.abs(np.concatenate([M[i, :i], M[i, i+1:]]))) for i in range(n)])
     min_dd = np.min(dd)
@@ -23,7 +23,9 @@ def shift_as_max_direction(M: np.array) -> float:
             if res > best_lb:
                 best_x = x
                 best_lb = res
-                best_shift = shift_v
+            best_shift = shift_v
+            if stop_early:
+                break
     # print(best_shift, best_x, best_lb)
     return best_lb
 
