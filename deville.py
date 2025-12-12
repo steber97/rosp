@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from typing import Tuple
 
-from utils import EPS, maximize_x
+from utils import EPS
+from piecewise_linear_maximize import maximize_x
 import greedy_pm_shift
 
 def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
