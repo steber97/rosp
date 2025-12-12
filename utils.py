@@ -257,8 +257,46 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
     :return: Description
     :rtype: List[Tuple[Tuple[float, float], float]]
     """
+    tot_const = 0
+    tot_x_coeff = 0
+    a_s = [x for x in m]
+    b_s = [x for x in v]
 
-    return None
+    for j, (a, b) in enumerate(zip(a_s, b_s)):
+        if b < 0:
+            a_s[j] *= -1
+            b_s[j] *= -1
+
+    tot_const += m[i]
+    tot_x_coeff -= v[i]
+    for j in range(len(m)):
+        if j != i:
+            if abs(v[j]) < EPS:
+                tot_const -= abs(m[j])
+            else:
+                tot_const -= a_s[j]
+                tot_x_coeff -= -b_s[j]
+    segments = []
+    abx = [(a_s[j], b_s[j], a_s[j]/b_s[j]) for j, (a, b) in enumerate(zip(a_s, b_s)) if i != j and b_s[j] != 0]
+    abx = sorted(abx, key=lambda x: x[2])
+    segments.append(PiecewiseSegment(None, XYPoint(abx[0][2], tot_const + abx[0][2] * tot_x_coeff), tot_x_coeff))
+    for i, (a, b, x) in enumerate(abx[:-1]):
+        tot_const += 2*a
+        tot_x_coeff -= 2*b
+        segments.append(PiecewiseSegment(
+            XYPoint(x, tot_const + x * tot_x_coeff), 
+            XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
+            tot_x_coeff
+        ))
+    tot_const += 2*abx[-1][0]
+    tot_x_coeff -= 2*abx[-1][1]
+    segments.append(PiecewiseSegment(
+        XYPoint(abx[-1][2], tot_const + abx[-1][2] * tot_x_coeff),
+        None,
+        tot_x_coeff
+    ))
+
+    return PiecewiseFunction(segments)
 
 def y(point: XYPoint, x: float, m: float) -> float:
     return m * (x - point.x) + point.y
@@ -371,26 +409,9 @@ def maximize_x(M: np.array, V: np.array) -> float:
 
 
 if __name__ == "__main__":
-    pt1 = XYPoint(-1, 2)
-    pt2 = XYPoint(-4, 2)
-    pt3 = XYPoint(0, 3)
-    pt4 = XYPoint(3, 1)
-    sg1 = PiecewiseSegment(None, pt1, 3)
-    sg2 = PiecewiseSegment(pt1, pt3, 1)
-    sg3 = PiecewiseSegment(pt3, None, 0.5)
+    ms = [2, 4, -1]
+    vs = [1, 2, -2]
 
-    sg4 = PiecewiseSegment(None, pt2, 3)
-    sg5 = PiecewiseSegment(pt2, pt4, -1/7)
-    sg6 = PiecewiseSegment(pt4, None, -4)
-
-    f1 = PiecewiseFunction(segments=[sg1, sg2, sg3])
-    f2 = PiecewiseFunction(segments=[sg4, sg5, sg6])
-
-    f1.plot()
-    f2.plot()
-    # plt.show()
-
-    f3 = merge_piecewise_linear(f1, f2)
-    print("max: {}".format(binary_search_max(f1)))
-    f3.plot()
+    f = create_piecewise_linear(ms, vs, 0)
+    f.plot()
     plt.show()
