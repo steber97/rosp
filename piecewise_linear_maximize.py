@@ -19,7 +19,25 @@ class XYPoint:
 
     def __repr__(self):
         return "Point ({:.2f}, {:.2f})".format(self.x, self.y)
-    
+
+
+def y(point: XYPoint, x: float, m: float) -> float:
+    """
+    Given a point and an angular coefficient, compute the y value corresponding
+    to a certain x.
+    """
+    return m * (x - point.x) + point.y
+
+
+def pt_intersect(p1: XYPoint, m1: float, p2: XYPoint, m2: float) -> XYPoint:
+    """
+    Given two points and two angular coefficients (they must be different),
+    compute the point where the two lines intersect.
+    """
+    assert abs(m1 - m2) > EPS
+    x = (-m2 * p2.x + m1 * p1.x - p1.y + p2.y) / (m1 - m2)
+    y = m1 * (x - p1.x) + p1.y
+    return XYPoint(x, y)
 
 class PiecewiseSegment:
     def __init__(self, p1: XYPoint, p2: XYPoint, m: float):
@@ -38,6 +56,7 @@ class PiecewiseSegment:
         self.p2 = p2
         assert not (p1 is None and p2 is None)
         self.m = m
+        assert abs(m) < EPS or abs(1/m) > EPS
         if self.p1 is not None and self.p2 is not None:
             assert p1.x <= p2.x and abs(p1.x - p2.x) > EPS
             assert abs((p2.x - p1.x) * m + p1.y - p2.y) < EPS
@@ -46,6 +65,141 @@ class PiecewiseSegment:
     def __repr__(self):
         return "{}, {}, m = {:.2f}".format(self.p1, self.p2, self.m)
     
+    def _min_start_None(self, ps: PiecewiseSegment) -> List[PiecewiseSegment]:
+        """
+        Return the min of two segments aligned by x, s.t. they start from -infinity.
+        I.e., their first point p1 is None.
+        
+        :type ps: PiecewiseSegment
+        :return: a list of one or two piecewise segments, starting with None,
+                 that represents the min function between self and ps.
+        """
+        assert self.p1 is None and ps.p1 is None
+        assert self.p2 is not None and ps.p2 is not None
+        assert abs(self.p2.x - ps.p2.x) < EPS
+        
+        # If the angular coefficients are the same, then just keep the 
+        # Segment with lower y value.
+        if abs(self.m - ps.m) < EPS:
+            if (self.p2.y <= ps.p2.y):
+                return [self]
+            else:
+                return [ps]
+        else:
+            # If the angular coefficients are different, then the two segments (prolongued into a line) intersect.
+            pt_inter = pt_intersect(self.p2, self.m, ps.p2, ps.m)
+            
+            if pt_inter.x >= self.p2.x or abs(pt_inter.x - self.p2.x) < EPS:
+                # If the intersection point is after the end of the interval
+                # Only keep the segment with the highest angular coefficient.
+                if self.m > ps.m:
+                    return [self]
+                else:
+                    return [ps]
+            else:
+                # The segment with highest angular coefficient appears first.
+                # Second the other segment.
+                if self.m > ps.m:
+                    return [PiecewiseSegment(None, pt_inter, self.m),
+                            PiecewiseSegment(pt_inter, ps.p2, ps.m)]
+                else:
+                    return [PiecewiseSegment(None, pt_inter, ps.m),
+                            PiecewiseSegment(pt_inter, self.p2, self.m)]
+    
+    def _min_end_None(self, ps: PiecewiseSegment) -> List[PiecewiseSegment]:
+        """
+        Return the min of two segments aligned by x, s.t. they end with +infinity.
+        I.e., their last point p2 is None.
+        
+        :type ps: PiecewiseSegment
+        :return: a list of one or two piecewise segments, ending with None,
+                 that represents the min function between self and ps.
+        """
+        assert self.p2 is None and ps.p2 is None
+        assert self.p1 is not None and ps.p1 is not None
+        assert abs(self.p1.x - ps.p1.x) < EPS
+        if abs(self.m - ps.m) < EPS:
+            # If the angular coefficients are the same, then just keep the 
+            # Segment with lower y value.
+            if self.p1.y <= ps.p1.y:
+                return [self]
+            else:
+                return [ps]
+        else:
+            # If the angular coefficients are different, then the two segments (prolongued into a line) intersect.
+            pt_inter = pt_intersect(self.p1, self.m, ps.p1, ps.m)
+
+            if pt_inter.x <= self.p1.x or abs(pt_inter.x - self.p1.x) < EPS:
+                if self.m < ps.m:
+                    return [self]
+                else:
+                    return [ps]
+            else:
+                if self.m < ps.m:
+                    # The segment with highest angular coefficient appears first.
+                    # Second the other segment.
+                    return [PiecewiseSegment(ps.p1, pt_inter, ps.m),
+                            PiecewiseSegment(pt_inter, None, self.m)]
+                else:
+                    return [PiecewiseSegment(self.p1, pt_inter, self.m),
+                            PiecewiseSegment(pt_inter, None, ps.m)]
+    
+    def _min_no_None(self, ps: PiecewiseSegment) -> List[PiecewiseSegment]:
+        """
+        Given two piecewise segments (self and ps) such that they are aligned by x,
+        and such that they have no endpoint set to None, return a list with 1 or 2 segments
+        that represents the min of the two segments.
+        
+        :param ps: Description
+        :return: Description
+        """
+        assert self.p1 is not None and self.p2 is not None and ps.p1 is not None and ps.p2 is not None
+        assert abs(self.p1.x - ps.p1.x) < EPS and abs(self.p2.x - ps.p2.x) < EPS
+        assert abs(self.p1.x - self.p2.x) > EPS
+        
+        if ((self.p1.y < ps.p1.y) or abs(self.p1.y - ps.p1.y) < EPS) and (
+            (self.p2.y < ps.p2.y) or abs(self.p2.y - ps.p2.y) < EPS):
+            # If self is strictly below ps:
+            return [self]
+        elif ((self.p1.y > ps.p1.y) or abs(self.p1.y - ps.p1.y) < EPS) and (
+            (self.p2.y > ps.p2.y) or abs(self.p2.y - ps.p2.y) < EPS):
+            # If ps is strictly below self:
+            return [ps]
+        elif (self.p1.y < ps.p1.y) and (self.p2.y > ps.p2.y):
+            # If self starts below, and then ps is below:
+            pt_inter = pt_intersect(self.p1, self.m, ps.p1, ps.m)
+            assert self.p1.x < pt_inter.x < self.p2.x
+            segments = []
+            if abs(self.p1.x - pt_inter.x) > EPS:
+                # If the intersection doesn't happen on self.p1.x
+                if abs(self.p2.x - pt_inter.x) > EPS:
+                    # If it doesn't happen on p2
+                    segments.append(PiecewiseSegment(self.p1, pt_inter, self.m))
+                else:
+                    segments.append(PiecewiseSegment(self.p1, self.p2, self.m))
+            if abs(ps.p2.x - pt_inter.x) > EPS:
+                if abs(self.p1.x - pt_inter.x) > EPS:
+                    segments.append(PiecewiseSegment(pt_inter, ps.p2, ps.m)) 
+                else:
+                    segments.append(PiecewiseSegment(ps.p1, ps.p2, ps.m))
+            return segments
+        else:
+            assert (self.p1.y > ps.p1.y) and (self.p2.y < ps.p2.y)
+            pt_inter = pt_intersect(self.p1, self.m, ps.p1, ps.m)
+            assert self.p1.x < pt_inter.x < self.p2.x
+            segments = []
+            if abs(pt_inter.x - ps.p1.x) > EPS:
+                if abs(pt_inter.x - self.p2.x) < EPS:
+                    segments.append(PiecewiseSegment(ps.p1, self.p2, ps.m))
+                else:
+                    segments.append(PiecewiseSegment(ps.p1, pt_inter, ps.m))
+            if abs(pt_inter.x - ps.p2.x) > EPS:
+                if abs(pt_inter.x - ps.p1.x) < EPS:
+                    segments.append(PiecewiseSegment(ps.p1, self.p2, self.m))
+                else:
+                    segments.append(PiecewiseSegment(pt_inter, self.p2, self.m))
+            return segments
+
     def min(self, ps: PiecewiseSegment) -> List[PiecewiseSegment]:
         """
         Given two piecewise segments, return the minimum of them. 
@@ -57,98 +211,24 @@ class PiecewiseSegment:
         :param ps: other piecewise segment
         :return: A piecewise function (with at most 2 segments) encoding min(self, ps).
         """
-        assert ((self.p1 is None and ps.p1 is None) or abs(self.p1.x - ps.p1.x) < EPS) and ((self.p2 is None and ps.p2 is None) or abs(self.p2.x - ps.p2.x) < EPS)
+        # Assert that the input makes sense.
+        assert ((self.p1 is None and ps.p1 is None) or abs(self.p1.x - ps.p1.x) < EPS) \
+            and ((self.p2 is None and ps.p2 is None) or abs(self.p2.x - ps.p2.x) < EPS)
         if self.p1 is not None and self.p2 is not None:
             assert self.p1.x < self.p2.x and abs(self.p1.x - self.p2.x) > EPS
-        segments = []
+        
         if self.p1 is None and ps.p1 is None:
-            assert self.p2 is not None and ps.p2 is not None
-            assert abs(self.p2.x - ps.p2.x) < EPS
-            if abs(self.m - ps.m) < EPS:
-                if (self.p2.y <= ps.p2.y):
-                    segments.append(self)
-                else:
-                    segments.append(ps)
-            else:
-                x = (-ps.m * ps.p2.x + self.m * self.p2.x - self.p2.y + ps.p2.y) / (self.m - ps.m)
-                y = self.m * (x - self.p2.x) + self.p2.y
-                if x >= self.p2.x or abs(x - self.p2.x) < EPS:
-                    if self.m > ps.m:
-                        segments.append(self)
-                    else:
-                        segments.append(ps)
-                else:
-                    if self.m > ps.m:
-                        segments.append(PiecewiseSegment(None, XYPoint(x, y), self.m))
-                        segments.append(PiecewiseSegment(XYPoint(x, y), ps.p2, ps.m))
-                    else:
-                        segments.append(PiecewiseSegment(None, XYPoint(x, y), ps.m))
-                        segments.append(PiecewiseSegment(XYPoint(x, y), self.p2, self.m))
-
+            # Case when the two intervals start from -infty.
+            return self._min_start_None(ps)
 
         elif self.p2 is None and ps.p2 is None:
-            assert self.p1 is not None and ps.p1 is not None
-            assert abs(self.p1.x - ps.p1.x) < EPS
-            if abs(self.m - ps.m) < EPS:
-                if self.p1.y <= ps.p1.y:
-                    segments.append(self)
-                else:
-                    segments.append(ps)
-            else:
-                x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
-                y = self.m * (x - self.p1.x) + self.p1.y
-                if x <= self.p1.x or abs(x - self.p1.x) < EPS:
-                    if self.m < ps.m:
-                        segments.append(self)
-                    else:
-                        segments.append(ps)
-                else:
-                    if self.m < ps.m:
-                        segments.append(PiecewiseSegment(ps.p1, XYPoint(x, y), ps.m))
-                        segments.append(PiecewiseSegment(XYPoint(x,y), None, self.m))
-                    else:
-                        segments.append(PiecewiseSegment(self.p1, XYPoint(x, y), self.m))
-                        segments.append(PiecewiseSegment(XYPoint(x, y), None, ps.m))
+            # Case when the two intervals end with -infty.
+            return self._min_end_None(ps)   
+        
         else:
-            assert self.p1 is not None and self.p2 is not None and ps.p1 is not None and ps.p2 is not None
-            assert abs(self.p1.x - ps.p1.x) < EPS and abs(self.p2.x - ps.p2.x) < EPS
-            assert abs(self.p1.x - self.p2.x) > EPS
-            if ((self.p1.y < ps.p1.y) or abs(self.p1.y - ps.p1.y) < EPS) and (
-                (self.p2.y < ps.p2.y) or abs(self.p2.y - ps.p2.y) < EPS):
-                segments.append(self)
-            elif ((self.p1.y > ps.p1.y) or abs(self.p1.y - ps.p1.y) < EPS) and (
-                (self.p2.y > ps.p2.y) or abs(self.p2.y - ps.p2.y) < EPS):
-                segments.append(ps)
-            elif (self.p1.y < ps.p1.y) and (self.p2.y > ps.p2.y):
-                x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
-                assert self.p1.x < x < self.p2.x
-                newpoint = XYPoint(x, self.m * x - self.m * self.p1.x + self.p1.y)
-                if abs(self.p1.x - x) > EPS:
-                    if abs(self.p2.x - x) > EPS:
-                        segments.append(PiecewiseSegment(self.p1, newpoint, self.m))
-                    else:
-                        segments.append(PiecewiseSegment(self.p1, self.p2, self.m))
-                if abs(ps.p2.x - x) > EPS:
-                    if abs(self.p1.x - x) > EPS:
-                        segments.append(PiecewiseSegment(newpoint, ps.p2, ps.m)) 
-                    else:
-                        segments.append(PiecewiseSegment(ps.p1, ps.p2, ps.m))
-            else:
-                assert (self.p1.y > ps.p1.y) and (self.p2.y < ps.p2.y)
-                x = (-ps.m * ps.p1.x + self.m * self.p1.x - self.p1.y + ps.p1.y) / (self.m - ps.m)
-                assert self.p1.x < x < self.p2.x
-                newpoint = XYPoint(x, self.m * x - self.m * self.p1.x + self.p1.y)
-                if abs(x - ps.p1.x) > EPS:
-                    if abs(x - self.p2.x) < EPS:
-                        segments.append(PiecewiseSegment(ps.p1, self.p2, ps.m))
-                    else:
-                        segments.append(PiecewiseSegment(ps.p1, newpoint, ps.m))
-                if abs(x - ps.p2.x) > EPS:
-                    if abs(x - ps.p1.x) < EPS:
-                        segments.append(PiecewiseSegment(ps.p1, self.p2, self.m))
-                    else:
-                        segments.append(PiecewiseSegment(newpoint, self.p2, self.m))
-        return segments
+            # General case.
+            return self._min_no_None(ps)
+    
 
 class PiecewiseFunction:
     """
@@ -306,8 +386,6 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
 
     return PiecewiseFunction(segments)
 
-def y(point: XYPoint, x: float, m: float) -> float:
-    return m * (x - point.x) + point.y
 
 def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> PiecewiseFunction:
     """
@@ -415,5 +493,7 @@ def maximize_x(M: np.array, V: np.array) -> float:
             new_merged_pf.append(merged_pf[-1][-1])
         # Here we can shorten new_merged_points.
         merged_pf.append(new_merged_pf)
-    
+    assert len(merged_pf) < 2 * np.log2(len(M))
+    for pf_list in merged_pf:
+        assert np.sum([len(pf.segments) for pf in pf_list]) <= (len(M)**2)
     return max(0, binary_search_max(merged_pf[-1][0]))
