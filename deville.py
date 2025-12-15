@@ -142,14 +142,17 @@ if __name__ == "__main__":
 
     legend_names = ['gersh', 'deville', 'brauer', 'eigv', 'greedy_pm_se', 'greedy_pm']
     # for j in range(5):
-    for j in [1, 4]:
-        plt.scatter([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j], alpha=0.5)
-        plt.plot([i for i in range(attempts)], [0 for i in range(attempts)])
-    plt.ylabel("lowest eigenvalue")
-    plt.xlabel("random attempt")
-    plt.legend()
-    plt.show()
+    # for j in [1, 4]:
+    #     plt.scatter([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j], alpha=0.5)
+    #     plt.plot([i for i in range(attempts)], [0 for i in range(attempts)])
+    # plt.ylabel("lowest eigenvalue")
+    # plt.xlabel("random attempt")
+    # plt.legend()
+    # plt.show()
 
+    plt.boxplot(np.array(pm_lb) - np.array(d_lb))
+    plt.ylabel("Difference between DeVille lb and our lb")
+    plt.show()
 
 
 
