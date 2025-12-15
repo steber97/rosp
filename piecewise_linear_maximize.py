@@ -47,6 +47,7 @@ class PiecewiseSegment:
         At least one of them needs to be not None.
         If the angular coefficient does not correspond to the angular coefficient
         between points p1 and p2, an error is raised.
+        The PiecewiseSegment cannot have x-length 0 (<EPS).
         
         :param p1: begin of segment.
         :param p2: end of segment.
@@ -233,6 +234,9 @@ class PiecewiseSegment:
 class PiecewiseFunction:
     """
     Simple representation as consecutive piecewise segments.
+    The function needs to start from -infinity (None) and end with +infinity (None).
+    There need to be at least two piecewise segments.
+    Consecutive Piecewise Segments need to be continuous and concave.
     """
 
     def __init__(self, segments: List[PiecewiseSegment]):
@@ -290,13 +294,17 @@ class PiecewiseFunction:
             if len(new_segments) == 0:
                 new_segments.append(self.segments[i])
             # Special case: in case it is a straight line, then we still need 2 elements with None at the extremes.
-            elif abs(new_segments[-1].m - self.segments[i].m) < EPS and i != len(self.segments) - 1:
+            elif (abs(new_segments[-1].m - self.segments[i].m) < EPS) and not (i == len(self.segments) - 1 and len(new_segments) == 1):
                 new_segments[-1].p2 = self.segments[i].p2
             else:
                 new_segments.append(self.segments[i])
         self.segments = new_segments
     
     def plot(self) -> None:
+        """
+        Plot the piecewise linear function. 
+        needs plt.show() in order to actually create the plot.
+        """
         avg_len = np.mean([s.p2.x - s.p1.x for s in self.segments[1:-1]])
         xs = []
         ys = []
@@ -318,21 +326,20 @@ class PiecewiseFunction:
 def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFunction:
     """
     Given the coefficients of the function f_i(x) = m[i] - x * v[i] - sum(|m[j] - x * v[j]|),
-    return it as a list of points, angular coefficients where there are the non-differentiable
-    points.
-    
-    :param m: Description
-    :type m: np.array
-    :param v: Description
-    :type v: np.array
-    :return: Description
-    :rtype: List[Tuple[Tuple[float, float], float]]
+    return a Piecewise Linear function out of it.
+    The complexity is O(n * log(n)).
     """
+
+    # The idea is to sort the (m[j] - x * v[j]) by x when they switch sign.
+    # Then, it is easy to compute the Piecewise linear segments in between the x's where the (...) switch sign.
+    # We just keep track of the total x and const coefficient, and as soon as (...) switch sign,
+    # we just update the total coefficient by that amount.
     tot_const = 0
     tot_x_coeff = 0
     a_s = [x for x in m]
     b_s = [x for x in v]
 
+    # Make sure that the x coefficients are all positive.
     for j, (a, b) in enumerate(zip(a_s, b_s)):
         if b < 0:
             a_s[j] *= -1
@@ -343,27 +350,32 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
     for j in range(len(m)):
         if j != i:
             if abs(v[j]) < EPS:
+                # If the x coefficient is zero, just subtract m[j]
                 tot_const -= abs(m[j])
             else:
                 tot_const -= a_s[j]
                 tot_x_coeff -= -b_s[j]
     segments = []
     abx = [(a_s[j], b_s[j], a_s[j]/b_s[j]) for j, (a, b) in enumerate(zip(a_s, b_s)) if i != j and b_s[j] != 0]
+    # Sort the intervals by increasing x (where the absolute value changes sign).
     abx = sorted(abx, key=lambda x: x[2])
     if len(abx) > 0:
         segments.append(PiecewiseSegment(None, XYPoint(abx[0][2], tot_const + abx[0][2] * tot_x_coeff), tot_x_coeff))
         for i, (a, b, x) in enumerate(abx[:-1]):
+            # The absolute value changes sign, so we flip the coefficients.
             tot_const += 2*a
             tot_x_coeff -= 2*b
-            # Prevent piecewisesement with empty x-interval.
+            # Prevent piecewise segment with empty x-interval.
             if abs(abx[i+1][2] - x) < EPS:
                 segments[-1].p2.x = abx[i+1][2]
+                # Shall I update also y? Not sure.
             else:
                 segments.append(PiecewiseSegment(
                     XYPoint(x, tot_const + x * tot_x_coeff), 
                     XYPoint(abx[i+1][2], tot_const + abx[i+1][2] * tot_x_coeff),
                     tot_x_coeff
                 ))
+        # Add the last segment to +infinity.
         tot_const += 2*abx[-1][0]
         tot_x_coeff -= 2*abx[-1][1]
         segments.append(PiecewiseSegment(
@@ -387,7 +399,7 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
     return PiecewiseFunction(segments)
 
 
-def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> PiecewiseFunction:
+def min_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> PiecewiseFunction:
     """
     Given 2 piecewise linear functions, defined as point, angular coefficient,
     return a new piecewise linear function that is the min of the two.
@@ -396,12 +408,21 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
     If they cross, add a new point.
     At the end, it would be good to remove useless intervals where the angular coefficient doesn't change.
     
-    :param l1: Description
-    :param l2: Description
-    :return: Description
+    :param l1:
+    :param l2:
+    :return:
     """
 
     def split_piecewise_function(l: PiecewiseFunction, xs: List[float]) -> List[PiecewiseSegment]:
+        """
+        Given a piecewise function, and a set of points xs, split the piecewise functions
+        in segments that correspond to the xs.
+        It should be the case that all the non-linear points in l are also contained in xs.
+        
+        :param l: 
+        :param xs:
+        :return:
+        """
         segments = [PiecewiseSegment(None, XYPoint(xs[0], y(l.segments[0].p2, xs[0], l.segments[0].m)), l.segments[0].m)]
         i = 1 if abs(xs[0] - l.segments[0].p2.x) < EPS else 0
         for j, x in enumerate(xs[:-1]):
@@ -416,6 +437,7 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
         segments.append(PiecewiseSegment(XYPoint(xs[-1], y(l.segments[-1].p1, xs[-1], l.segments[-1].m)), None, l.segments[-1].m))
         return segments
 
+    # Compute the non-linearity points of the two functions. 
     xs = []
     i = 1
     j = 1
@@ -430,27 +452,29 @@ def merge_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piec
         else:
             xs.append(l2.segments[j].p1.x)
             j += 1
-        
     xs += [s.p1.x for s in l1.segments[i:]]
     xs += [s.p1.x for s in l2.segments[j:]]
 
     for i in range(len(xs)-1):
+        # Assert all intervals are non-empty.
         assert xs[i+1] > xs[i] and abs(xs[i+1] - xs[i]) > EPS
 
     seg1 = split_piecewise_function(l1, xs)
     seg2 = split_piecewise_function(l2, xs)
 
     segments = []
+    # Compute the minimum of every pair of segments (aligned on the x-axis).
     for s1, s2 in zip(seg1, seg2):
         segments += s1.min(s2)
 
     f = PiecewiseFunction(segments)
+    # If two consecutive segments have the same angular coefficient, merge them into a unique segment.
     f.shorten()
     return f
 
 def binary_search_max(l: PiecewiseFunction) -> float:
     """
-    Given a list of points, angular coefficients of a convex function,
+    Given a list of (points, angular coefficients) of a concave function,
     find the x that maximizes it. It is sufficient to look right as long as the angular coefficient is increasing,
     and to look left when the angular coefficient is decreasing.
     
@@ -466,6 +490,7 @@ def binary_search_max(l: PiecewiseFunction) -> float:
     while low < high:
         mid = (high + low) // 2
         if abs(l.segments[mid].m) < EPS:
+            # If the angular coefficient is zero, stop.
             return l.segments[mid].p1.x if l.segments[mid].p1 is not None else l.segments[mid].p2.x
         elif l.segments[mid].m < 0:
             high = mid
@@ -482,18 +507,34 @@ def binary_search_max(l: PiecewiseFunction) -> float:
 
 
 def maximize_x(M: np.array, V: np.array) -> float:
+    """
+    Given the coefficients M, V, find the x that maximizes
+    the diagonally dominance condition of M - x*V.
+    We do it using a "mergesort" strategy:
+    The diagonally dominance condition on every row of the matrix M - xV 
+    is a concave piecewise linear function: dd(i) = M[i] - x*v[i] - \sum_{j!=i} |m[j] - x v[j]|.
+    The diagonally dominance condition of M - x V is the min_i dd(i).
+    We are looking for max_x min_i dd(i).
+    We do it by computing the min_i dd(i) function for pairs of rows recursively.
+    When we have the global min function, we can use binary search to look for the maximizer x.
+    This takes only O(n^2 log(n)).
+    
+    :param M: 
+    :param V:
+    """
     merged_pf = [[]] # merged piecewise functions
     for i in range(len(M)):
         merged_pf[0].append(create_piecewise_linear(M[i,:], V[i,:], i))
     while len(merged_pf[-1]) > 1:
         new_merged_pf = []
+        # Merge piecewise linear function in pairs.
         for i in range(0, len(merged_pf[-1])-1, 2):
-            new_merged_pf.append(merge_piecewise_linear(merged_pf[-1][i], merged_pf[-1][i+1]))
+            new_merged_pf.append(min_piecewise_linear(merged_pf[-1][i], merged_pf[-1][i+1]))
         if len(merged_pf[-1]) % 2 == 1:
             new_merged_pf.append(merged_pf[-1][-1])
-        # Here we can shorten new_merged_points.
         merged_pf.append(new_merged_pf)
     assert len(merged_pf) < 2 * np.log2(len(M))
     for pf_list in merged_pf:
         assert np.sum([len(pf.segments) for pf in pf_list]) <= (len(M)**2)
+    # Return the maximizer x. If it is negative, return 0 instead.
     return max(0, binary_search_max(merged_pf[-1][0]))
