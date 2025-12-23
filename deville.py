@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 from typing import Tuple
+import pandas as pd
+import time
+from tqdm import tqdm
 
 from utils import EPS
 from piecewise_linear_maximize import maximize_x
@@ -20,16 +23,19 @@ def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
 def maximize_gershgoryn_circle(M, v):
     # maximize f by minimizing -f(x)
     # res = minimize_scalar(lambda x: -gap_diagonally_dominance(x, M, v), bounds=[0, np.max(M)], )
-    x = maximize_x(M, np.outer(v, v))
+    # return res.x, gap_diagonally_dominance(res.x, M, v)
     # if abs(res.x) > EPS and abs(gap_diagonally_dominance(res.x, M, v) - gap_diagonally_dominance(x, M, v)) > EPS:
     #     print(res.x, x, gap_diagonally_dominance(res.x, M, v), gap_diagonally_dominance(x, M, v), M, v)
     #     raise AssertionError
+
+    x = maximize_x(M, np.outer(v, v))
     return x, gap_diagonally_dominance(x, M, v)
 
 def delta_i_k(M: np.array, i: int, k: int) -> float:
     """
     Def 3.3 of paper.
     Careful because all indices are shifted by one.
+    Time complexity O(n * log(n))
     """
     n = len(M)
     assert 0 <= i < n and 0 <= k < n
@@ -40,6 +46,7 @@ def s_i_k(M: np.array, i: int, k: int) -> float:
     """
     Def 3.3 of paper
     Careful because all indices are shifted by one.
+    Time complexity O(n * log(n)) (due to delta_i_k)
     """
     n = len(M)
     assert 0 <= i < n and 0 <= k < n
@@ -49,6 +56,7 @@ def s_k(M: np.array, k: int) -> float:
     """
     Def 3.3 of paper
     Careful because all indices are shifted by one.
+    Time complexity O(n^2 * log(n))
     """
     n = len(M)
     assert 0 <= k < n
@@ -84,7 +92,7 @@ def brauers_lb(M: np.array) -> float:
 
 def deville_lb(M: np.array) -> float:
     n = len(M)
-    x = compute_x(M)
+    # x = compute_x(M)
     x_2, min_gersh_circle = maximize_gershgoryn_circle(M, np.ones(n))
     
     # Here it looks that x_2 optimized using the optimizer is better for some reason? :/
@@ -96,6 +104,13 @@ def deville_lb(M: np.array) -> float:
         assert gershgorin_lb(SM) >= gershgorin_lb(M) - EPS
         return gershgorin_lb(SM)
     return gershgorin_lb(M)
+
+
+def eig_lb(M: np.array) -> float:
+    """
+    Compute the smallest true eigenvalue of M.
+    """
+    return np.linalg.eig(M)[0].min()
 
 
 def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_perc: float, diag_boost: float = 0):
@@ -112,47 +127,47 @@ def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_per
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 5
-    attempts = 1000
+    n = 1000
+    attempts = 1
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
     diag_boost = 15
-        
-    g_lb = []
-    d_lb = []
-    b_lb = []
-    pm_greedy_lb = []
-    pm_lb = []
-    eigvals = []
-    values = []
-    for att in range(attempts):
+    
+    lb_functions = [
+        # (gershgorin_lb, "gershgorin"),
+        # (deville_lb, "deville"),
+        # (brauers_lb, "brauers"),
+        (eig_lb, "eigenvalue"),
+        (greedy_pm_shift.shift_as_max_direction, "greedy")
+    ]
+    df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
+
+    for att in tqdm(range(attempts)):
         M = create_rand_symmetric_matrix(n, range_values, sign_perc, diag_boost)
         if att == 0:
             print(M)
-        
-        g_lb.append(gershgorin_lb(M))
-        d_lb.append(deville_lb(M))
-        b_lb.append(brauers_lb(M))
-        eigvals.append(np.linalg.eig(M)[0].min())
-        pm_greedy_lb.append(greedy_pm_shift.shift_as_max_direction(M))
-        pm_lb.append(greedy_pm_shift.shift_as_max_direction(M, stop_early=False))
-        values.append((g_lb[-1], d_lb[-1], b_lb[-1], eigvals[-1], pm_lb[-1], pm_greedy_lb[-1]))
-    
-    values = sorted(values, key=lambda x: x[2])
+        row = {}
+        for lb_f, lb_name in lb_functions:
+            start = time.time()
+            row[lb_name] = lb_f(M)
+            end = time.time() - start
+            row[lb_name+"_time"] = end
+        df_result.loc[len(df_result)] = row
+    print(df_result.describe())
 
-    legend_names = ['gersh', 'deville', 'brauer', 'eigv', 'greedy_pm_se', 'greedy_pm']
-    # for j in range(5):
-    # for j in [1, 4]:
-    #     plt.scatter([i for i in range(attempts)], [values[i][j] for i in range(attempts)], label=legend_names[j], alpha=0.5)
-    #     plt.plot([i for i in range(attempts)], [0 for i in range(attempts)])
-    # plt.ylabel("lowest eigenvalue")
-    # plt.xlabel("random attempt")
-    # plt.legend()
+    #plt.boxplot(np.array(df_result['greedy']) - np.array(df_result['deville']))
+    # plt.ylabel("Difference between DeVille lb and our lb")
+
+    f, (ax1, ax2) = plt.subplots(1, 2)
+
+    ax1.boxplot(df_result[[lb_name + '_time' for lb_f, lb_name in lb_functions]], 
+                labels=[lb_name for lb_f, lb_name in lb_functions])
+    ax1.set_ylabel("time")
+
+    ax2.boxplot(df_result[[lb_name for lb_f, lb_name in lb_functions]], 
+                labels=[lb_name for lb_f, lb_name in lb_functions])
+    ax2.set_ylabel("LB")
     # plt.show()
-
-    plt.boxplot(np.array(pm_lb) - np.array(d_lb))
-    plt.ylabel("Difference between DeVille lb and our lb")
-    plt.show()
 
 
 
