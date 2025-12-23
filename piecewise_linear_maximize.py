@@ -25,6 +25,7 @@ def y(point: XYPoint, x: float, m: float) -> float:
     """
     Given a point and an angular coefficient, compute the y value corresponding
     to a certain x.
+    Complexity O(1).
     """
     return m * (x - point.x) + point.y
 
@@ -33,6 +34,7 @@ def pt_intersect(p1: XYPoint, m1: float, p2: XYPoint, m2: float) -> XYPoint:
     """
     Given two points and two angular coefficients (they must be different),
     compute the point where the two lines intersect.
+    Complexity O(1).
     """
     assert abs(m1 - m2) > EPS
     x = (-m2 * p2.x + m1 * p1.x - p1.y + p2.y) / (m1 - m2)
@@ -70,6 +72,7 @@ class PiecewiseSegment:
         """
         Return the min of two segments aligned by x, s.t. they start from -infinity.
         I.e., their first point p1 is None.
+        Time complexity O(1).
         
         :type ps: PiecewiseSegment
         :return: a list of one or two piecewise segments, starting with None,
@@ -111,6 +114,7 @@ class PiecewiseSegment:
         """
         Return the min of two segments aligned by x, s.t. they end with +infinity.
         I.e., their last point p2 is None.
+        Time complexity O(1).
         
         :type ps: PiecewiseSegment
         :return: a list of one or two piecewise segments, ending with None,
@@ -150,6 +154,7 @@ class PiecewiseSegment:
         Given two piecewise segments (self and ps) such that they are aligned by x,
         and such that they have no endpoint set to None, return a list with 1 or 2 segments
         that represents the min of the two segments.
+        Time complexity O(1).
         
         :param ps: Description
         :return: Description
@@ -208,6 +213,7 @@ class PiecewiseSegment:
         (in case one of the two segments lies below the other)
         or a piecewise function of two segments (in case they cross at some point in the interval).
         Notice that the two segments should be defined over the same interval p1.x->p2.x. 
+        Time complexity O(1).
         
         :param ps: other piecewise segment
         :return: A piecewise function (with at most 2 segments) encoding min(self, ps).
@@ -240,6 +246,9 @@ class PiecewiseFunction:
     """
 
     def __init__(self, segments: List[PiecewiseSegment]):
+        """
+        Time complexity O(n), where n is the number of segments.
+        """
         self.segments: List[PiecewiseSegment] = segments
         assert len(segments) >= 2
         assert segments[0].p1 is None
@@ -253,6 +262,7 @@ class PiecewiseFunction:
         """
         Check that the piecewise function is continuous.
         Namely, the joints need to coincide.
+        Time complexity O(n).
         """
         for i in range(len(self.segments) - 1):
             if self.segments[i].p2 != self.segments[i+1].p1:
@@ -263,6 +273,7 @@ class PiecewiseFunction:
         """
         Check that the piecewise linear function is convex: namely,
         that the consecutive angular coefficients are non decreasing.
+        Time complexity O(n).
         """
         if not self.check_continuous():
             return False
@@ -275,6 +286,7 @@ class PiecewiseFunction:
         """
         Check that the piecewise linear function is concave: namely,
         that the consecutive angular coefficients are non increasing.
+        Time complexity O(n).
         """
         if not self.check_continuous():
             return False
@@ -288,6 +300,7 @@ class PiecewiseFunction:
         If there are consecutive piecewise linear segments with the same angular coefficient,
         merge them into a unique segment.
         The operation happens inplace (self.segments is changed).
+        Time complexity O(n).
         """
         new_segments: List[PiecewiseSegment] = []
         for i in range(len(self.segments)):
@@ -401,13 +414,14 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
 
 def min_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> PiecewiseFunction:
     """
-    Given 2 piecewise linear functions, defined as point, angular coefficient,
+    Given 2 piecewise linear functions,
     return a new piecewise linear function that is the min of the two.
     It is enough to split the two functions according to the same x's,
     and then understand which of the 2 functions is below in the aligned intervals.
     If they cross, add a new point.
     At the end, it would be good to remove useless intervals where the angular coefficient doesn't change.
-    
+    Time complexity O(|l1| + |l2|).
+
     :param l1:
     :param l2:
     :return:
@@ -418,6 +432,7 @@ def min_piecewise_linear(l1: PiecewiseFunction, l2: PiecewiseFunction) -> Piecew
         Given a piecewise function, and a set of points xs, split the piecewise functions
         in segments that correspond to the xs.
         It should be the case that all the non-linear points in l are also contained in xs.
+        Time complexity O(|l| + |xs|).
         
         :param l: 
         :param xs:
@@ -477,6 +492,7 @@ def binary_search_max(l: PiecewiseFunction) -> float:
     Given a list of (points, angular coefficients) of a concave function,
     find the x that maximizes it. It is sufficient to look right as long as the angular coefficient is increasing,
     and to look left when the angular coefficient is decreasing.
+    Time complexity O(log(|l|)).
     
     :param l: Description
     :type l: List[Tuple[Tuple[float, float], float]]
@@ -526,6 +542,7 @@ def maximize_x(M: np.array, V: np.array) -> float:
     for i in range(len(M)):
         merged_pf[0].append(create_piecewise_linear(M[i,:], V[i,:], i))
     while len(merged_pf[-1]) > 1:
+        assert sum([len(merged_pf[-1][i].segments) for i in range(len(merged_pf[-1]))]) <= 2*len(M)**2
         new_merged_pf = []
         # Merge piecewise linear function in pairs.
         for i in range(0, len(merged_pf[-1])-1, 2):
