@@ -127,7 +127,7 @@ def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_per
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 1000
+    n = 5000
     attempts = 1
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
