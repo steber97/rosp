@@ -1,4 +1,5 @@
 from __future__ import annotations
+from concurrent.futures import ProcessPoolExecutor
 from typing import TYPE_CHECKING, List, Tuple
 from math import inf
 import numpy as np
@@ -372,6 +373,7 @@ def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFuncti
     abx = [(a_s[j], b_s[j], a_s[j]/b_s[j]) for j, (a, b) in enumerate(zip(a_s, b_s)) if i != j and b_s[j] != 0]
     # Sort the intervals by increasing x (where the absolute value changes sign).
     abx = sorted(abx, key=lambda x: x[2])
+
     if len(abx) > 0:
         segments.append(PiecewiseSegment(None, XYPoint(abx[0][2], tot_const + abx[0][2] * tot_x_coeff), tot_x_coeff))
         for i, (a, b, x) in enumerate(abx[:-1]):
@@ -521,6 +523,9 @@ def binary_search_max(l: PiecewiseFunction) -> float:
         assert l.segments[low].m < 0
         return l.segments[low].p1.x if l.segments[low].p1 is not None else -inf
 
+def worker(args):
+    i, m_row, v_row = args
+    return create_piecewise_linear(m_row, v_row, i)
 
 def maximize_x(M: np.array, V: np.array) -> float:
     """
@@ -538,9 +543,12 @@ def maximize_x(M: np.array, V: np.array) -> float:
     :param M: 
     :param V:
     """
+
+    tasks = [(i, M[i, :], V[i, :]) for i in range(len(M))]
     merged_pf = [[]] # merged piecewise functions
-    for i in range(len(M)):
-        merged_pf[0].append(create_piecewise_linear(M[i,:], V[i,:], i))
+    with ProcessPoolExecutor() as executor:
+        results = list(executor.map(worker, tasks))
+    merged_pf[0].extend(results)
     while len(merged_pf[-1]) > 1:
         assert sum([len(merged_pf[-1][i].segments) for i in range(len(merged_pf[-1]))]) <= 2*len(M)**2
         new_merged_pf = []
