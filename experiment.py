@@ -9,14 +9,14 @@ from deville import deville_lb
 from eig import eig_lb
 from greedy_pm_shift import max_direction_lb
 from random_shift import random_lb
-from utils import create_rand_symmetric_matrix
+from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros
 
 
 if __name__ == "__main__":
     
     np.random.seed(42)
     n = 10
-    attempts = 10
+    attempts = 3
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
     diag_boost = 20
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
     for att in tqdm(range(attempts)):
-        M = create_rand_symmetric_matrix(n, range_values, sign_perc, diag_boost)
+        M = create_rand_dd_plus_ros(n, 0.3)
         if att == 0:
             print(M)
         row = {}

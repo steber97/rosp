@@ -50,3 +50,24 @@ def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_per
                 M[j,i] = -M[j,i]
             M[i,j] = M[j,i]
     return M
+
+
+def create_rand_symmetric(n: int) -> np.ndarray:
+    M = (np.random.rand(n**2).reshape(n, n) - 0.5) * 2
+    for i in range(n):
+        # M[i,i] = np.abs(M[i,i])
+        for j in range(i):
+            M[i,j] = M[j,i]
+    return M
+
+
+def create_rand_dd(n):
+    M = create_rand_symmetric(n)
+    for i in range(n):
+        M[i,i] += np.sum(np.abs(np.concatenate([M[i,:i], ([] if i == n-1 else M[i+1, :])]))) - M[i,i]
+    return M
+
+def create_rand_dd_plus_ros(n: int, alpha: float = 0.5) -> np.ndarray:
+    v = np.random.rand(n)
+    dd = create_rand_dd(n)
+    return alpha * dd + (1-alpha) * np.outer(v, v)
