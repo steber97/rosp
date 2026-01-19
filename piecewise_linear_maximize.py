@@ -1,6 +1,6 @@
 from __future__ import annotations
 from concurrent.futures import ProcessPoolExecutor
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Optional
 from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,7 +43,7 @@ def pt_intersect(p1: XYPoint, m1: float, p2: XYPoint, m2: float) -> XYPoint:
     return XYPoint(x, y)
 
 class PiecewiseSegment:
-    def __init__(self, p1: XYPoint, p2: XYPoint, m: float):
+    def __init__(self, p1: Optional[XYPoint], p2: Optional[XYPoint], m: float):
         """
         If p1 or p2 are None, it means that the piecewise segment
         goes to or from +- infinity.
