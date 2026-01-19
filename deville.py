@@ -1,11 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize_scalar
 from typing import Tuple
-import pandas as pd
-import time
-from tqdm import tqdm
 
+from gershgorin import gershgorin_lb
 from utils import EPS
 from piecewise_linear_maximize import maximize_x
 import greedy_pm_shift
@@ -76,10 +72,6 @@ def compute_x(M: np.ndarray) -> float:
     x = (s_k(M, l-1) - s_k(M, k-1))/(2*(l-k))
     return x
 
-def gershgorin_lb(M: np.ndarray) -> float:
-    n = len(M)
-    return np.min([M[i,i] - np.sum(np.abs(np.concatenate([M[i,:i], M[i,i+1:]]))) for i in range(n)])
-
 def R_i(M: np.ndarray, i: int) -> float:
     """
     Simple sum of off-diagonal elements
@@ -104,70 +96,3 @@ def deville_lb(M: np.ndarray) -> float:
         assert gershgorin_lb(SM) >= gershgorin_lb(M) - EPS
         return gershgorin_lb(SM)
     return gershgorin_lb(M)
-
-
-def eig_lb(M: np.ndarray) -> float:
-    """
-    Compute the smallest true eigenvalue of M.
-    """
-    return np.linalg.eig(M)[0].min()
-
-
-def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_perc: float, diag_boost: float = 0):
-    M = np.random.randint(low=range_values[0], high=range_values[1], size=(n, n))
-    # Make it symmetric.
-    for i in range(n):
-        M[i,i] += diag_boost
-        for j in range(i):
-            if np.random.rand() < sign_perc:
-                M[j,i] = -M[j,i]
-            M[i,j] = M[j,i]
-    return M
-
-if __name__ == "__main__":
-    
-    np.random.seed(42)
-    n = 10
-    attempts = 10
-    range_values = (0,11)  # inclusive, exclusive
-    sign_perc = 0.5
-    diag_boost = 20
-    
-    lb_functions = [
-        # (gershgorin_lb, "gershgorin"),
-        (deville_lb, "deville"),
-        # (brauers_lb, "brauers"),
-        (eig_lb, "eigenvalue"),
-        (greedy_pm_shift.shift_as_max_direction, "greedy")
-    ]
-    df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
-
-    for att in tqdm(range(attempts)):
-        M = create_rand_symmetric_matrix(n, range_values, sign_perc, diag_boost)
-        if att == 0:
-            print(M)
-        row = {}
-        for lb_f, lb_name in lb_functions:
-            start = time.time()
-            row[lb_name] = lb_f(M)
-            end = time.time() - start
-            row[lb_name+"_time"] = end
-        df_result.loc[len(df_result)] = row
-    print(df_result.describe())
-
-    #plt.boxplot(np.array(df_result['greedy']) - np.array(df_result['deville']))
-    # plt.ylabel("Difference between DeVille lb and our lb")
-
-    f, (ax1, ax2) = plt.subplots(1, 2)
-
-    ax1.boxplot(df_result[[lb_name + '_time' for lb_f, lb_name in lb_functions]], 
-                labels=[lb_name for lb_f, lb_name in lb_functions])
-    ax1.set_ylabel("time")
-
-    ax2.boxplot(df_result[[lb_name for lb_f, lb_name in lb_functions]], 
-                labels=[lb_name for lb_f, lb_name in lb_functions])
-    ax2.set_ylabel("LB")
-    plt.show()
-
-
-
