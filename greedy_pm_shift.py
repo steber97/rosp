@@ -1,11 +1,12 @@
 import numpy as np
+from typing import Tuple
 
 from utils import EPS
 
 from deville import maximize_gershgoryn_circle, gershgorin_lb, deville_lb, create_rand_symmetric_matrix
 
 
-def shift_as_max_direction(M: np.array, stop_early: bool = True) -> float:
+def shift_as_max_direction(M: np.ndarray, stop_early: bool = True) -> float:
     n = len(M)
     dd = np.array([M[i,i] - np.sum(np.abs(np.concatenate([M[i, :i], M[i, i+1:]]))) for i in range(n)])
     min_dd = np.min(dd)
@@ -35,7 +36,7 @@ def shift_as_max_direction(M: np.array, stop_early: bool = True) -> float:
 
 if __name__=='__main__':
     n = 5
-    range_vals = [0, 11]
+    range_vals: Tuple[int, int] = (0, 11)
     sign_perc = 0.5
     M = create_rand_symmetric_matrix(n, range_vals, sign_perc)
     print(M)

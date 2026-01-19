@@ -10,7 +10,7 @@ from utils import EPS
 from piecewise_linear_maximize import maximize_x
 import greedy_pm_shift
 
-def gap_diagonally_dominance(x: float, M: np.array, v: np.array) -> float:
+def gap_diagonally_dominance(x: float, M: np.ndarray, v: np.ndarray) -> float:
     """
     Compute the max dd-gap on any row of M, when applying the shift x * vv^T.
     """
@@ -31,7 +31,7 @@ def maximize_gershgoryn_circle(M, v):
     x = maximize_x(M, np.outer(v, v))
     return x, gap_diagonally_dominance(x, M, v)
 
-def delta_i_k(M: np.array, i: int, k: int) -> float:
+def delta_i_k(M:  np.ndarray, i: int, k: int) -> float:
     """
     Def 3.3 of paper.
     Careful because all indices are shifted by one.
@@ -42,7 +42,7 @@ def delta_i_k(M: np.array, i: int, k: int) -> float:
     y = sorted([M[i,j] for j in range(n) if i != j])
     return np.sum(y[:k]) - np.sum(y[k:])
 
-def s_i_k(M: np.array, i: int, k: int) -> float:
+def s_i_k(M: np.ndarray, i: int, k: int) -> float:
     """
     Def 3.3 of paper
     Careful because all indices are shifted by one.
@@ -52,7 +52,7 @@ def s_i_k(M: np.array, i: int, k: int) -> float:
     assert 0 <= i < n and 0 <= k < n
     return M[i,i] + delta_i_k(M, i, k)
 
-def s_k(M: np.array, k: int) -> float:
+def s_k(M: np.ndarray, k: int) -> float:
     """
     Def 3.3 of paper
     Careful because all indices are shifted by one.
@@ -62,7 +62,7 @@ def s_k(M: np.array, k: int) -> float:
     assert 0 <= k < n
     return np.min([s_i_k(M, i, k) for i in range(n)])
 
-def compute_x(M: np.array) -> float:
+def compute_x(M: np.ndarray) -> float:
     """
     Corollary 3.5 of paper
     """
@@ -76,21 +76,21 @@ def compute_x(M: np.array) -> float:
     x = (s_k(M, l-1) - s_k(M, k-1))/(2*(l-k))
     return x
 
-def gershgorin_lb(M: np.array) -> float:
+def gershgorin_lb(M: np.ndarray) -> float:
     n = len(M)
     return np.min([M[i,i] - np.sum(np.abs(np.concatenate([M[i,:i], M[i,i+1:]]))) for i in range(n)])
 
-def R_i(M: np.array, i: int) -> float:
+def R_i(M: np.ndarray, i: int) -> float:
     """
     Simple sum of off-diagonal elements
     """
     return np.sum(np.abs(np.concatenate([M[i,:i], M[i, i+1:]])))
 
-def brauers_lb(M: np.array) -> float:
+def brauers_lb(M: np.ndarray) -> float:
     n = len(M)
     return np.min([((M[i,i] + M[j,j]) / 2) - (np.sqrt((M[i,i] - M[j,j])**2 + R_i(M, i) * R_i(M, j))) for i in range(n) for j in range(n) if i != j])
 
-def deville_lb(M: np.array) -> float:
+def deville_lb(M: np.ndarray) -> float:
     n = len(M)
     # x = compute_x(M)
     x_2, min_gersh_circle = maximize_gershgoryn_circle(M, np.ones(n))
@@ -106,7 +106,7 @@ def deville_lb(M: np.array) -> float:
     return gershgorin_lb(M)
 
 
-def eig_lb(M: np.array) -> float:
+def eig_lb(M: np.ndarray) -> float:
     """
     Compute the smallest true eigenvalue of M.
     """
@@ -114,7 +114,7 @@ def eig_lb(M: np.array) -> float:
 
 
 def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_perc: float, diag_boost: float = 0):
-    M = np.random.randint(np.ones(n**2) * range_values[0], np.ones(n**2) * range_values[1]).reshape(n, n)
+    M = np.random.randint(low=range_values[0], high=range_values[1], size=(n, n))
     # Make it symmetric.
     for i in range(n):
         M[i,i] += diag_boost
@@ -127,15 +127,15 @@ def create_rand_symmetric_matrix(n: int, range_values: Tuple[int, int], sign_per
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 5000
-    attempts = 1
+    n = 10
+    attempts = 10
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
-    diag_boost = 15
+    diag_boost = 20
     
     lb_functions = [
         # (gershgorin_lb, "gershgorin"),
-        # (deville_lb, "deville"),
+        (deville_lb, "deville"),
         # (brauers_lb, "brauers"),
         (eig_lb, "eigenvalue"),
         (greedy_pm_shift.shift_as_max_direction, "greedy")
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     ax2.boxplot(df_result[[lb_name for lb_f, lb_name in lb_functions]], 
                 labels=[lb_name for lb_f, lb_name in lb_functions])
     ax2.set_ylabel("LB")
-    # plt.show()
+    plt.show()
 
 
 

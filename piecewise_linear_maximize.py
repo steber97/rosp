@@ -337,7 +337,7 @@ class PiecewiseFunction:
                 ys.append(seg.p2.y)
         plt.plot(xs, ys)
 
-def create_piecewise_linear(m: np.array, v: np.array, i: int) -> PiecewiseFunction:
+def create_piecewise_linear(m: np.ndarray, v: np.ndarray, i: int) -> PiecewiseFunction:
     """
     Given the coefficients of the function f_i(x) = m[i] - x * v[i] - sum(|m[j] - x * v[j]|),
     return a Piecewise Linear function out of it.
@@ -527,7 +527,7 @@ def worker(args):
     i, m_row, v_row = args
     return create_piecewise_linear(m_row, v_row, i)
 
-def maximize_x(M: np.array, V: np.array) -> float:
+def maximize_x(M: np.ndarray, V: np.ndarray) -> float:
     """
     Given the coefficients M, V, find the x that maximizes
     the diagonally dominance condition of M - x*V.
