@@ -67,7 +67,7 @@ def create_rand_dd(n):
         M[i,i] += np.sum(np.abs(np.concatenate([M[i,:i], ([] if i == n-1 else M[i+1, :])]))) - M[i,i]
     return M
 
-def create_rand_dd_plus_ros(n: int, alpha: float = 0.5) -> np.ndarray:
-    v = np.random.rand(n)
+def create_rand_dd_plus_ros(n: int, alpha_dd: float = 0.5) -> np.ndarray:
+    v = (np.random.rand(n) -0.5) * 2
     dd = create_rand_dd(n)
-    return alpha * dd + (1-alpha) * np.outer(v, v)
+    return alpha_dd * dd + (1-alpha_dd) * np.outer(v, v)
