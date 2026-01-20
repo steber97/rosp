@@ -34,36 +34,10 @@ def rand_cluster_lb(M: np.ndarray, *args) -> float:
                 directions[0][i] = np.abs(directions[0][i])
             else:
                 directions[-1] = -directions[-1]
-                directions[0][dd_value[1][0]] = - np.abs(directions[0][dd_value[1][0]])
+                directions[0][i] = - np.abs(directions[0][i])
 
     tot = np.sum([dd_value[k][1] for k in range(rep)])
     direction = np.sum([directions[k] * dd_value[k][1] / tot for k in range(rep)], axis=0)
-        
-    # k = 3 # at random at the moment.
-    # direction = np.ones(n)
-    # for dir in range(k):
-    #     i, dd_val = dd_value[dir]
-    #     if dir == 0:
-    #         direction[i] = 1
-    #         for j in range(n):
-    #             if j != i:
-    #                 direction[j] = direction[j] * (1 if M[i,j] >= -EPS else -1)  # Here we would like to have zeros
-    #         direction /= np.sqrt(direction @ direction)
-    #         assert np.abs(direction @ direction - 1) < EPS
-    #     elif dd_val < -EPS:
-    #         newdir = np.ones(n)
-    #         newdir[i] = 1 if direction[i] >= -EPS else -1
-    #         for j in range(n):
-    #             if j != i:
-    #                 newdir[j] = newdir[j] * (newdir[i] if M[i,j] > EPS else -newdir[i])
-    #         newdir /= np.sqrt(newdir @ newdir)
-    #         if newdir @ direction > EPS:
-    #             pass
-    #         else:
-    #             direction[i] *= -1
-    #             newdir *= -1
-    #         direction = direction * (dd_value[0][0] / (dd_value[i][0]+dd_value[0][0])) + newdir * (dd_value[i][0] / (dd_value[i][0]+dd_value[0][0]))  
-
     x = maximize_x(M, np.outer(direction, direction))
 
     return gershgorin_lb(M - x * np.outer(direction, direction))
