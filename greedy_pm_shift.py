@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from typing import Tuple
 
@@ -19,9 +20,7 @@ def max_direction_lb(M: np.ndarray, *args) -> float:
     n = len(M)
     dd = np.array([M[i,i] - np.sum(np.abs(np.concatenate([M[i, :i], M[i, i+1:]]))) for i in range(n)])
     min_dd = np.min(dd)
-    best_shift = np.ones(n)
-    best_lb = deville.deville_lb(M)
-    best_x = maximize_x(M, np.outer(best_shift, best_shift))
+    best_lb = - math.inf
     for i in range(n):
         if np.abs(dd[i] - min_dd) < EPS:
             shift_v = np.ones_like(M[i])
