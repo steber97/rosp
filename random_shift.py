@@ -16,7 +16,7 @@ def single_random_lb(M: np.ndarray) -> float:
     return gershgorin_lb(M)
 
 
-def random_lb(M: np.ndarray) -> float:
+def random_lb(M: np.ndarray, *args) -> float:
     rep = int(np.ceil(np.log(len(M))))
     best_lb = -math.inf
     for r in range(rep):

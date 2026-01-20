@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def gershgorin_lb(M: np.ndarray) -> float:
+def gershgorin_lb(M: np.ndarray, *args) -> float:
     """
     Simple gershgorin circle theorem: the smallest eigenvalue is >= than
     the smallest circle (difference between diagonal element and the absolute value

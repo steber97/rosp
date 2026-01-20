@@ -5,7 +5,7 @@ from gershgorin import gershgorin_lb
 from piecewise_linear_maximize import maximize_x
 from greedy_pm_shift import max_direction_lb
 
-def rand_cluster_lb(M: np.ndarray, *args) -> float:
+def avg_direction_lb(M: np.ndarray, *args) -> float:
     """
     args: number of repetitions. Needs to be a constant. Defaults to 2
     """
@@ -46,4 +46,4 @@ def rand_cluster_lb(M: np.ndarray, *args) -> float:
 if __name__ == "__main__":
     M = create_rand_dd_plus_ros(10, 0.3)
     print(M)
-    rand_cluster_lb(M)
+    avg_direction_lb(M)

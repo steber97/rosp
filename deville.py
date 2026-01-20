@@ -78,11 +78,11 @@ def R_i(M: np.ndarray, i: int) -> float:
     """
     return np.sum(np.abs(np.concatenate([M[i,:i], M[i, i+1:]])))
 
-def brauers_lb(M: np.ndarray) -> float:
+def brauers_lb(M: np.ndarray, *args) -> float:
     n = len(M)
     return np.min([((M[i,i] + M[j,j]) / 2) - (np.sqrt((M[i,i] - M[j,j])**2 + R_i(M, i) * R_i(M, j))) for i in range(n) for j in range(n) if i != j])
 
-def deville_lb(M: np.ndarray) -> float:
+def deville_lb(M: np.ndarray, *args) -> float:
     n = len(M)
     # x = compute_x(M)
     x_2, min_gersh_circle = maximize_gershgoryn_circle(M, np.ones(n))

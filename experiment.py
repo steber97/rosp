@@ -5,34 +5,34 @@ import time
 import matplotlib.pyplot as plt
 
 
-from deville import deville_lb
+from deville import deville_lb, brauers_lb
 from eig import eig_lb
+from gershgorin import gershgorin_lb
 from greedy_pm_shift import max_direction_lb
 from random_shift import random_lb
-from rand_cluster import rand_cluster_lb
+from avg_direction import avg_direction_lb
 from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros
 
 
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 10
-    attempts = 3
+    n = 15
+    attempts = 10
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
     diag_boost = 20
     
     lb_functions = [
-        # (gershgorin_lb, "gershgorin"),
-        # (deville_lb, "deville"),
-        # (brauers_lb, "brauers"),
-        # (eig_lb, "eigenvalue"),
+        (gershgorin_lb, "gershgorin", ()),
+        (deville_lb, "deville", ()),
+        (brauers_lb, "brauers", ()),
+        (random_lb, "random", ()),
         (max_direction_lb, "greedy", (1)),
-        (rand_cluster_lb, "rand_cluster_1", (1)),
-        (rand_cluster_lb, "rand_cluster_2", (2)),
-        (rand_cluster_lb, "rand_cluster_3", (3)),
-        (rand_cluster_lb, "rand_cluster_4", (4)),
-        # (random_lb, "random"),
+        (avg_direction_lb, "avg_direction_2", (2)),
+        (avg_direction_lb, "avg_direction_3", (3)),
+        (avg_direction_lb, "avg_direction_4", (4)),
+        (eig_lb, "eigenvalue", ()),
     ]
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
@@ -59,4 +59,6 @@ if __name__ == "__main__":
     ax2.boxplot(df_result[[lb_name for lb_f, lb_name, args in lb_functions]], 
                 labels=[lb_name for lb_f, lb_name, args in lb_functions])
     ax2.set_ylabel("LB")
+    ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha="right")
+    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha="right")
     plt.show()
