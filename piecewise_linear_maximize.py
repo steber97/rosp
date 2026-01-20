@@ -383,7 +383,7 @@ def create_piecewise_linear(m: np.ndarray, v: np.ndarray, i: int) -> PiecewiseFu
             # Prevent piecewise segment with empty x-interval.
             if abs(abx[i+1][2] - x) < EPS:
                 segments[-1].p2.x = abx[i+1][2]
-                # Shall I update also y? Not sure.
+                segments[-1].p2.y = tot_const + abx[i+1][2] * tot_x_coeff
             else:
                 segments.append(PiecewiseSegment(
                     XYPoint(x, tot_const + x * tot_x_coeff), 
@@ -533,7 +533,7 @@ def maximize_x(M: np.ndarray, V: np.ndarray) -> float:
     the diagonally dominance condition of M - x*V.
     We do it using a "mergesort" strategy:
     The diagonally dominance condition on every row of the matrix M - xV 
-    is a concave piecewise linear function: dd(i) = M[i] - x*v[i] - \sum_{j!=i} |m[j] - x v[j]|.
+    is a concave piecewise linear function: dd(i) = M[i] - x*v[i] - sum_{j!=i} |m[j] - x v[j]|.
     The diagonally dominance condition of M - x V is the min_i dd(i).
     We are looking for max_x min_i dd(i).
     We do it by computing the min_i dd(i) function for pairs of rows recursively.
