@@ -8,12 +8,14 @@ from gershgorin import gershgorin_lb
 from piecewise_linear_maximize import maximize_x
 
 
-def max_direction_lb(M: np.ndarray, stop_early: bool = True) -> float:
+def max_direction_lb(M: np.ndarray, *args) -> float:
     """
     Simple heuristic: given a matrix, it produces a shift (+ Gershgorin circle theorem).
     The shift is computed to improve greedily the worst row.
     The time complexity is O(n^2 * log(n)).
+    args: stop early (after first considered row). Defaults to True.
     """
+    stop_early = bool(args[0]) if len(args) > 0 else True
     n = len(M)
     dd = np.array([M[i,i] - np.sum(np.abs(np.concatenate([M[i, :i], M[i, i+1:]]))) for i in range(n)])
     min_dd = np.min(dd)
