@@ -11,8 +11,10 @@ from gershgorin import gershgorin_lb
 from greedy_pm_shift import max_direction_lb
 from random_shift import random_lb
 from avg_direction import avg_direction_lb
+from avg_direction_v2 import avg_direction_v2_lb
 from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros
 
+np.set_printoptions(precision=2, suppress=True)
 
 if __name__ == "__main__":
     
@@ -29,9 +31,8 @@ if __name__ == "__main__":
         (brauers_lb, "brauers", ()),
         (random_lb, "random", ()),
         (max_direction_lb, "greedy", (1)),
-        (avg_direction_lb, "avg_direction_2", (2)),
-        (avg_direction_lb, "avg_direction_3", (3)),
-        (avg_direction_lb, "avg_direction_4", (4)),
+        (avg_direction_lb, "avg_direction_15", (15)),
+        (avg_direction_v2_lb, "avg_direction_v2", ()),
         (eig_lb, "eigenvalue", ()),
     ]
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
