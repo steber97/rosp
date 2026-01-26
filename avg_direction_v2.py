@@ -6,8 +6,6 @@ from gershgorin import gershgorin_lb
 from piecewise_linear_maximize import maximize_x
 from greedy_pm_shift import max_direction_lb
 
-np.set_printoptions(precision=2, suppress=True)
-
 def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
     """
     args: number of repetitions. Needs to be a constant. Defaults to 2
@@ -36,7 +34,7 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
     tot = np.sum([dd_value[k][1] for k in range(rep)])
     direction = np.sum([directions[k] * dd_value[k][1] / tot for k in range(rep)], axis=0)
     direction /= np.sqrt(direction @ direction)
-    print(direction, direction @ direction)
+    # print(direction, direction @ direction)
     x = maximize_x(M, np.outer(direction, direction))
 
     return gershgorin_lb(M - x * np.outer(direction, direction))

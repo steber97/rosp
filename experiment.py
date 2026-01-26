@@ -51,7 +51,7 @@ if __name__ == "__main__":
     #plt.boxplot(np.array(df_result['greedy']) - np.array(df_result['deville']))
     # plt.ylabel("Difference between DeVille lb and our lb")
 
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 9))
+    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 9))
 
     ax1.boxplot(df_result[[lb_name + '_time' for lb_f, lb_name, args in lb_functions]], 
                 labels=[lb_name for lb_f, lb_name, args in lb_functions])
@@ -60,6 +60,14 @@ if __name__ == "__main__":
     ax2.boxplot(df_result[[lb_name for lb_f, lb_name, args in lb_functions]], 
                 labels=[lb_name for lb_f, lb_name, args in lb_functions])
     ax2.set_ylabel("LB")
+
+    ax3.bar(
+        [i+0.5 for i in range(len(lb_functions))], 
+        df_result[[lb_name for lb_f, lb_name, args in lb_functions]].apply(lambda x: x>=0).sum(axis=0),
+        tick_label=[lb_name for lb_f, lb_name, args in lb_functions])
+    ax3.set_ylabel("# correctly labelled PSD")
+
     ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha="right")
     ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha="right")
+    ax3.set_xticklabels(ax3.get_xticklabels(), rotation=45, ha="right")
     plt.show()
