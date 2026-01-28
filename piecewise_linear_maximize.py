@@ -13,7 +13,7 @@ class XYPoint:
         self.y = y
     
     def __eq__(self, other):
-        return abs(self.x - other.x) < 1e-6 and abs(self.y - other.y) < 1e-6
+        return abs(self.x - other.x) < EPS and abs(self.y - other.y) < EPS
 
     def __ne__(self, other):
         return not self.__eq__(other)
