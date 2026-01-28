@@ -12,7 +12,7 @@ from greedy_pm_shift import max_direction_lb
 from random_shift import random_lb
 from avg_direction import avg_direction_lb
 from avg_direction_v2 import avg_direction_v2_lb
-from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros
+from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_rand_psd_matrix, EPS
 
 np.set_printoptions(precision=2, suppress=True)
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
     for att in tqdm(range(attempts)):
-        M = create_rand_dd_plus_ros(n, 0.1)
+        M = create_rand_psd_matrix(n)
         row = {}
         for lb_f, lb_name, args in lb_functions:
             start = time.time()
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     ax3.bar(
         [i+0.5 for i in range(len(lb_functions))], 
-        df_result[[lb_name for lb_f, lb_name, args in lb_functions]].apply(lambda x: x>=0).sum(axis=0),
+        df_result[[lb_name for lb_f, lb_name, args in lb_functions]].apply(lambda x: x>=-EPS).sum(axis=0),
         tick_label=[lb_name for lb_f, lb_name, args in lb_functions])
     ax3.set_ylabel("# correctly labelled PSD")
 

@@ -27,7 +27,9 @@ def diagonally_dominant(M: np.ndarray) -> bool:
 
 
 def psd(M: np.ndarray) -> bool:
-    return np.linalg.eig(M)[0].min() >= 0
+    eigvals, eigvects = np.linalg.eig(M)
+    assert np.all([eigv.imag > -EPS for eigv in eigvals])
+    return np.min([x.real for x in np.linalg.eig(M)[0]]) >= -EPS
 
 
 def is_vect_eigenv(M: np.ndarray, v: np.ndarray) -> bool:
@@ -71,3 +73,8 @@ def create_rand_dd_plus_ros(n: int, alpha_dd: float = 0.5) -> np.ndarray:
     v = (np.random.rand(n) -0.5) * 2
     dd = create_rand_dd(n)
     return alpha_dd * dd + (1-alpha_dd) * np.outer(v, v)
+
+def create_rand_psd_matrix(n):
+    m = np.random.randint(low=1, high=n+1)
+    B = (np.random.rand(n*m).reshape(m, n) - 0.5) * 2
+    return B.T @ B
