@@ -1,5 +1,16 @@
+from typing import Callable, List, Tuple
 import numpy as np
 from scipy.linalg import eigh
+from tqdm import tqdm
+
+from utils import heuristic_psd_check
+from deville import deville_lb, brauers_lb
+from eig import eig_lb
+from gershgorin import gershgorin_lb
+from greedy_pm_shift import max_direction_lb
+from random_shift import random_lb
+from avg_direction import avg_direction_lb
+from avg_direction_v2 import avg_direction_v2_lb
 
 def psd_projection(W, eps=1e-8):
     # Full eigen-decomposition
@@ -7,18 +18,23 @@ def psd_projection(W, eps=1e-8):
     eigvals_clipped = np.maximum(eigvals, 0.0)
     return eigvecs @ np.diag(eigvals_clipped) @ eigvecs.T
 
-def psd_projection_heuristic(W):
+def psd_projection_heuristic(W, lbs_heuristics, stats):
     # Example cheap test: Gershgorin lower bound
     diag = np.diag(W)
     off_diag_sum = np.sum(np.abs(W), axis=1) - np.abs(diag)
+    for lb in lbs_heuristics:
+        stats[lb[1]] += [lb[0](W, lb[2])]
+        if heuristic_psd_check(W, lb[0], lb[2]):
+            print("hi")
+            
 
     if np.all(diag - off_diag_sum >= -1e-6):
         # Likely PSD, skip eigendecomposition
-        return W
+        return W 
     else:
         return psd_projection(W)
     
-def maxcut_sdp_admm(W, rho=1.0, max_iter=1000, tol=1e-6):
+def maxcut_sdp_admm(W, rho=1.0, max_iter=1000, tol=1e-6, lbs_heuristics=[]) -> np.ndarray:
     """
     We are trying to optimize:
     max <W,X>
@@ -38,14 +54,18 @@ def maxcut_sdp_admm(W, rho=1.0, max_iter=1000, tol=1e-6):
     Z = np.eye(n)
     Y = np.zeros((n, n))  # dual variable
 
-    for k in range(max_iter):
+    stats = {}
+    for lb in lbs_heuristics:
+        stats[lb[1]] = []
+
+    for k in tqdm(range(max_iter)):
         # ----- X-update (affine + diag constraint) -----
         X = Z - Y + (1 / rho) * W_copy
         np.fill_diagonal(X, 1.0)
 
         # ----- Z-update (PSD projection) -----
         Z_prev = Z.copy()
-        Z = psd_projection_heuristic(X + Y)
+        Z = psd_projection_heuristic(X + Y, lbs_heuristics, stats)
 
         # ----- Dual update -----
         Y += X - Z
@@ -58,6 +78,7 @@ def maxcut_sdp_admm(W, rho=1.0, max_iter=1000, tol=1e-6):
             print(f"Converged in {k} iterations")
             break
 
+    print(stats)
     return Z
 
 def factor_psd_eig(X, tol=1e-8):
@@ -72,9 +93,9 @@ def factor_psd_eig(X, tol=1e-8):
     B = np.diag(sqrt_vals) @ eigvecs[:, idx].T
     return B
 
-def max_cut(W):
+def max_cut(W: np.ndarray, lbs: List[Tuple[Callable[..., float], str, Tuple]]) -> np.ndarray:
     # IMPORTANT: we are minimizing -W!!
-    X = maxcut_sdp_admm(W, rho=1, max_iter=10**4, tol=1e-5)
+    X = maxcut_sdp_admm(W, rho=1, max_iter=10**4, tol=1e-5, lbs_heuristics=lbs)
     B = factor_psd_eig(X)
     # print(B)
     # TODO: here I would need to recover the node embedding, and draw the random hyperplane.
@@ -84,6 +105,21 @@ if __name__=="__main__":
     np.random.seed(42)
 
     n = 50
+
+    lb_functions = [
+        (gershgorin_lb, "gershgorin", ()),
+        # (deville_lb, "deville", ()),
+        # (brauers_lb, "brauers", ()),
+        # (random_lb, "random", ()),
+        # (max_direction_lb, "greedy", (1)),
+        # (avg_direction_lb, "avg_direction_15", (n)),
+        # (avg_direction_v2_lb, "avg_direction_v2", (1)),
+        # (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
+        # (avg_direction_v2_lb, "avg_direction_v2_rep3", (3)),
+        (eig_lb, "eigenvalue", ()),
+    ]
+
+    
 
     # Random symmetric weights (spin-glass style)
     W = np.random.randint(0, n, size=(n, n))
@@ -96,4 +132,4 @@ if __name__=="__main__":
     # W += 0.8 * (U @ U.T)
 
     # print(W[:10, :10])
-    max_cut(W)
+    max_cut(W, lb_functions)
