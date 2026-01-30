@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, List
+from typing import Callable, Tuple, List
 
 EPS = 1e-5
 
@@ -74,9 +74,15 @@ def create_rand_dd_plus_ros(n: int, alpha_dd: float = 0.5) -> np.ndarray:
     dd = create_rand_dd(n)
     return alpha_dd * dd + (1-alpha_dd) * np.outer(v, v)
 
+
 def create_rand_psd_matrix(n):
     m = np.random.randint(low=1, high=n+1)
     # m = 2
     B = (np.random.rand(n*m).reshape(m, n) - 0.5) * 2 
     # The eye function helps a bit, because it shifts the eigenvalues up.
     return B.T @ B # + np.eye(n) * k 
+
+
+def heuristic_psd_check(M: np.ndarray, lb_f: Callable[..., float], *args) -> bool:
+    # Simply checks if the LB given is enough to say that the matrix is psd.
+    return lb_f(M, *args) > -EPS
