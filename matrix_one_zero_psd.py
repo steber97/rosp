@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 from utils import psd
 
-def build_zero_one_mat_with_pairs(n: int, pairs: List[Tuple[int, int]]) -> np.array:
+def build_zero_one_mat_with_pairs(n: int, pairs: List[Tuple[int, int]]) -> np.ndarray:
     M = np.ones((n, n))
     for pair in pairs:
         M[pair[0], pair[1]] = 0
