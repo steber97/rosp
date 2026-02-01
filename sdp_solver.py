@@ -4,11 +4,11 @@ from scipy.linalg import eigh
 from tqdm import tqdm
 
 from utils import heuristic_psd_check
-from deville import deville_lb, brauers_lb
-from eig import eig_lb
-from gershgorin import gershgorin_lb
-from greedy_pm_shift import max_direction_lb
-from random_shift import random_lb
+from lbs.deville import deville_lb, brauers_lb
+from lbs.eig import eig_lb
+from lbs.gershgorin import gershgorin_lb
+from lbs.greedy_pm_shift import max_direction_lb
+from lbs.random_shift import random_lb
 from avg_direction import avg_direction_lb
 from avg_direction_v2 import avg_direction_v2_lb
 

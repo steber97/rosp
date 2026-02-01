@@ -5,13 +5,13 @@ import time
 import matplotlib.pyplot as plt
 
 
-from deville import deville_lb, brauers_lb
-from eig import eig_lb
-from gershgorin import gershgorin_lb
-from greedy_pm_shift import max_direction_lb
-from random_shift import random_lb
-from avg_direction import avg_direction_lb
-from avg_direction_v2 import avg_direction_v2_lb
+from lbs.deville import deville_lb, brauers_lb
+from lbs.eig import eig_lb
+from lbs.gershgorin import gershgorin_lb
+from lbs.greedy_pm_shift import max_direction_lb
+from lbs.random_shift import random_lb
+from lbs.avg_direction import avg_direction_lb
+from lbs.avg_direction_v2 import avg_direction_v2_lb
 from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_rand_psd_matrix, EPS
 
 np.set_printoptions(precision=2, suppress=True)
