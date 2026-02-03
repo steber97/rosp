@@ -1,7 +1,9 @@
 import numpy as np
 import typing
 import math
+
 from lbs.gershgorin import gershgorin_lb
+from utils import EPS
 
 def sos_lb(M: np.ndarray, *args) -> float:
     repetitions = 10
@@ -13,7 +15,7 @@ def sos_lb(M: np.ndarray, *args) -> float:
         for i in range(n):
             N = np.sum([M[i][j] * v[j] for j in range(n) if j != i])
             D = np.sum([v[j]**2 for j in range(n) if j != i])
-            v[i] = N / D
+            v[i] = (N / D) if (N/D)**2 <= M[i,i] + EPS else np.sqrt(M[i,i])
         new_lb = gershgorin_lb(M - np.outer(v,v))
         if new_lb > best_lb:
             best_v = v.copy()
