@@ -12,7 +12,7 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
             as the sum of rank-repetitions vectors.
     """
     n = len(M)
-    repetitions = int(args[0]) if len(args) > 0 else 1  # Use as default 2
+    repetitions = int(args[0]) if len(args) > 0 else 2  # Use as default 2
     M_copy = M.copy()
     for rank_k_approx in range(repetitions):
         dd_value = [(
