@@ -36,7 +36,7 @@ if __name__ == "__main__":
         (avg_direction_v2_lb, "avg_direction_v2", (1)),
         (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
         (avg_direction_v2_lb, "avg_direction_v2_rep3", (3)),
-        (sos_lb, "sos_lb", ()),
+        (sos_lb, "sos", ()),
         (eig_lb, "eigenvalue", ()),
     ]
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
