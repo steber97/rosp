@@ -20,7 +20,7 @@ np.set_printoptions(precision=2, suppress=True)
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 10
+    n = 6
     attempts = 10
     range_values = (0,11)  # inclusive, exclusive
     sign_perc = 0.5
@@ -29,10 +29,10 @@ if __name__ == "__main__":
     lb_functions = [
         (gershgorin_lb, "gershgorin", ()),
         (deville_lb, "deville", ()),
-        (brauers_lb, "brauers", ()),
-        (random_lb, "random", ()),
-        (max_direction_lb, "greedy", (1)),
-        (avg_direction_lb, "avg_direction_15", (n)),
+        # (brauers_lb, "brauers", ()),
+        # (random_lb, "random", ()),
+        # (max_direction_lb, "greedy", (1)),
+        # (avg_direction_lb, "avg_direction_15", (n)),
         (avg_direction_v2_lb, "avg_direction_v2", (1)),
         (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
         (avg_direction_v2_lb, "avg_direction_v2_rep3", (3)),
