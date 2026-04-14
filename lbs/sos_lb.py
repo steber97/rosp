@@ -74,11 +74,11 @@ def sos_lb(M: np.ndarray, *args) -> float:
         if new_lb > best_lb:
             best_v = v.copy()
             best_lb = new_lb
-    print(np.max(lbs_sos), np.max(lbs_abs))
-    plt.plot([i for i in range(len(lbs_sos))], lbs_sos, label='sos')
-    plt.plot([i for i in range(len(lbs_abs))], lbs_abs, label='abs')
-    plt.legend()
-    plt.show()
+    # print(np.max(lbs_sos), np.max(lbs_abs))
+    # plt.plot([i for i in range(len(lbs_sos))], lbs_sos, label='sos')
+    # plt.plot([i for i in range(len(lbs_abs))], lbs_abs, label='abs')
+    # plt.legend()
+    # plt.show()
 
     return best_lb
 
