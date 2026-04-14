@@ -355,7 +355,8 @@ def create_piecewise_linear(m: np.ndarray, v: np.ndarray, i: int) -> PiecewiseFu
 
     # Make sure that the x coefficients are all positive.
     for j, (a, b) in enumerate(zip(a_s, b_s)):
-        if b < 0:
+        if b < -EPS:
+            assert j != i # the element v[i] on the diagonal is a square, so it is nonnegative.
             a_s[j] *= -1
             b_s[j] *= -1
 
@@ -367,6 +368,7 @@ def create_piecewise_linear(m: np.ndarray, v: np.ndarray, i: int) -> PiecewiseFu
                 # If the x coefficient is zero, just subtract m[j]
                 tot_const -= abs(m[j])
             else:
+                assert b_s[j] > -EPS
                 tot_const -= a_s[j]
                 tot_x_coeff -= -b_s[j]
     segments = []
@@ -543,7 +545,8 @@ def maximize_x(M: np.ndarray, V: np.ndarray) -> float:
     :param M: 
     :param V:
     """
-
+    V = np.round(V, 4)
+    print(V)
     tasks = [(i, M[i, :], V[i, :]) for i in range(len(M))]
     merged_pf = [[]] # merged piecewise functions
     with ProcessPoolExecutor() as executor:
