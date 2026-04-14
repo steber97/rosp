@@ -546,7 +546,7 @@ def maximize_x(M: np.ndarray, V: np.ndarray) -> float:
     :param V:
     """
     V = np.round(V, 4)
-    print(V)
+    # print(V)
     tasks = [(i, M[i, :], V[i, :]) for i in range(len(M))]
     merged_pf = [[]] # merged piecewise functions
     with ProcessPoolExecutor() as executor:
