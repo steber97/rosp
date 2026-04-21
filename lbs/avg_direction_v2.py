@@ -5,7 +5,7 @@ from time import time
 
 from utils import EPS, create_rand_psd_matrix
 from lbs.gershgorin import gershgorin_lb
-from piecewise_linear_maximize import maximize_x, argmax_x
+# from piecewise_linear_maximize import maximize_x, argmax_x
 import optimization_module
 from lbs.greedy_pm_shift import max_direction_lb
 from lbs.sos_lb import sos_lb
@@ -51,11 +51,10 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
             direction /= np.sqrt(direction @ direction)
             # print(direction)
             # print(direction, direction @ direction)
-            x = maximize_x(M_copy, np.outer(direction, direction))
-            x3 = argmax_x(M_copy, np.outer(direction, direction))
-            x2 = optimization_module.maximize_x_cpp(M_copy, np.outer(direction, direction))
+            # x = maximize_x(M_copy, np.outer(direction, direction))
+            # x3 = argmax_x(M_copy, np.outer(direction, direction))
+            x = optimization_module.maximize_x_cpp(M_copy, np.outer(direction, direction))
             
-            print(x, x2, x3)
             # assert abs(x-x2) < EPS
             # TODO: Using convex optimization to speed up.
             # x = argmax_x(M_copy, np.outer(direction, direction), bounds=[0,np.max(M_copy)])
