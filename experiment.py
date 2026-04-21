@@ -13,6 +13,7 @@ from lbs.random_shift import random_lb
 from lbs.avg_direction import avg_direction_lb
 from lbs.avg_direction_v2 import avg_direction_v2_lb
 from lbs.sos_lb import sos_lb
+from lbs.abs_lb import abs_lb
 from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_rand_psd_matrix, EPS
 
 np.set_printoptions(precision=2, suppress=True)
@@ -26,14 +27,10 @@ if __name__ == "__main__":
     lb_functions = [
         (gershgorin_lb, "Gershgorin", ()),
         (deville_lb, "DeVille", ()),
-        # (brauers_lb, "brauers", ()),
-        # (random_lb, "random", ()),
-        # (max_direction_lb, "greedy", (1)),
-        # (avg_direction_lb, "avg_direction_15", (n)),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        # (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
         (avg_direction_v2_lb, "Algorithm 2(k=3)", (3)),
         (sos_lb, "sos", ()),
+        (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
     ]
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
@@ -51,7 +48,7 @@ if __name__ == "__main__":
         df_result.loc[len(df_result)] = row
     print(df_result.describe())
 
-    df_result = df_result.sort_values(by='Algorithm 2(k=1)')
+    df_result = df_result.sort_values(by='sos')
     for lb_f, lb_name, args in lb_functions:
         plt.scatter(
             [i for i in range(len(df_result))],

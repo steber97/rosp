@@ -4,8 +4,69 @@ from typing import TYPE_CHECKING, List, Tuple, Optional
 from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize_scalar 
 
 from utils import EPS
+
+def argmax_x(M, V, bounds=None):
+    """
+    Solve
+
+        argmax_x  min_i [ M[i,i] - x*V[i,i] - sum_{j!=i} |M[i,j] - x*V[i,j]| ]
+
+    Parameters
+    ----------
+    M : (n,n) ndarray
+    V : (n,n) ndarray
+    bounds : tuple (lo, hi), optional
+        Search interval for x. If given, bounded optimization is used.
+
+    Returns
+    -------
+    x_star : float
+    f_star : float
+    """
+
+    M = np.asarray(M, dtype=float)
+    V = np.asarray(V, dtype=float)
+    n = M.shape[0]
+
+    def objective(x):
+        row_vals = np.empty(n)
+
+        for i in range(n):
+            # diagonal term
+            val = M[i, i] - x * V[i, i]
+
+            # off-diagonal absolute value sum
+            s = 0.0
+            for j in range(n):
+                if j != i:
+                    s += abs(M[i, j] - x * V[i, j])
+
+            row_vals[i] = val - s
+
+        # maximize min_i(...)
+        return np.min(row_vals)
+
+    # scipy minimizes, so minimize negative objective
+    def neg_objective(x):
+        return -objective(x)
+
+    if bounds is None:
+        res = minimize_scalar(neg_objective, method='brent')
+    else:
+        res = minimize_scalar(
+            neg_objective,
+            bounds=bounds,
+            method='bounded'
+        )
+
+    x_star = res.x
+    f_star = objective(x_star)
+
+    return x_star
+
 
 class XYPoint:
     def __init__(self, x: float, y: float):

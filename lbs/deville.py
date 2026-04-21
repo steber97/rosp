@@ -3,7 +3,7 @@ from typing import Tuple
 
 from lbs.gershgorin import gershgorin_lb
 from utils import EPS
-from piecewise_linear_maximize import maximize_x
+from piecewise_linear_maximize import maximize_x, argmax_x
 import lbs.greedy_pm_shift as greedy_pm_shift
 
 def gap_diagonally_dominance(x: float, M: np.ndarray, v: np.ndarray) -> float:
@@ -24,7 +24,10 @@ def maximize_gershgoryn_circle(M, v):
     #     print(res.x, x, gap_diagonally_dominance(res.x, M, v), gap_diagonally_dominance(x, M, v), M, v)
     #     raise AssertionError
 
-    x = maximize_x(M, np.outer(v, v))
+    # TODO: Now I am using concave optimization to speed up.
+    # x = maximize_x(M, np.outer(v, v))
+    x = argmax_x(M, np.outer(v, v))
+    x = 0 if x < EPS else x
     return x, gap_diagonally_dominance(x, M, v)
 
 def delta_i_k(M:  np.ndarray, i: int, k: int) -> float:
