@@ -20,22 +20,19 @@ np.set_printoptions(precision=2, suppress=True)
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 6
-    attempts = 10
-    range_values = (0,11)  # inclusive, exclusive
-    sign_perc = 0.5
-    diag_boost = 20
+    n = 5
+    attempts = 50
     
     lb_functions = [
-        (gershgorin_lb, "gershgorin", ()),
-        (deville_lb, "deville", ()),
+        (gershgorin_lb, "Gershgorin", ()),
+        (deville_lb, "DeVille", ()),
         # (brauers_lb, "brauers", ()),
         # (random_lb, "random", ()),
         # (max_direction_lb, "greedy", (1)),
         # (avg_direction_lb, "avg_direction_15", (n)),
-        (avg_direction_v2_lb, "avg_direction_v2", (1)),
-        (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
-        (avg_direction_v2_lb, "avg_direction_v2_rep3", (3)),
+        (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
+        # (avg_direction_v2_lb, "avg_direction_v2_rep2", (2)),
+        (avg_direction_v2_lb, "Algorithm 2(k=3)", (3)),
         (sos_lb, "sos", ()),
         (eig_lb, "eigenvalue", ()),
     ]
@@ -43,6 +40,8 @@ if __name__ == "__main__":
 
     for att in tqdm(range(attempts)):
         M = create_rand_psd_matrix(n)
+        if att == 0:
+            print(M)
         row = {}
         for lb_f, lb_name, args in lb_functions:
             start = time.time()
@@ -52,26 +51,55 @@ if __name__ == "__main__":
         df_result.loc[len(df_result)] = row
     print(df_result.describe())
 
-    #plt.boxplot(np.array(df_result['greedy']) - np.array(df_result['deville']))
-    # plt.ylabel("Difference between DeVille lb and our lb")
+    df_result = df_result.sort_values(by='Algorithm 2(k=1)')
+    for lb_f, lb_name, args in lb_functions:
+        plt.scatter(
+            [i for i in range(len(df_result))],
+            df_result[lb_name], label=lb_name
+        )
+    
+    plt.plot(
+        [i for i in range(len(df_result))],
+        [0 for i in range(len(df_result))], label='zero')
+    
+    df_lbs = df_result[[col for col in df_result.columns if "time" not in col]]
+    print((df_lbs>0).sum(axis=0))
 
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 9))
-
-    ax1.boxplot(df_result[[lb_name + '_time' for lb_f, lb_name, args in lb_functions]], 
-                labels=[lb_name for lb_f, lb_name, args in lb_functions])
-    ax1.set_ylabel("time")
-
-    ax2.boxplot(df_result[[lb_name for lb_f, lb_name, args in lb_functions]], 
-                labels=[lb_name for lb_f, lb_name, args in lb_functions])
-    ax2.set_ylabel("LB")
-
-    ax3.bar(
-        [i+0.5 for i in range(len(lb_functions))], 
-        df_result[[lb_name for lb_f, lb_name, args in lb_functions]].apply(lambda x: x>=-EPS).sum(axis=0),
-        tick_label=[lb_name for lb_f, lb_name, args in lb_functions])
-    ax3.set_ylabel("# correctly labelled PSD")
-
-    ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha="right")
-    ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha="right")
-    ax3.set_xticklabels(ax3.get_xticklabels(), rotation=45, ha="right")
+    plt.legend()
     plt.show()
+    with open("plot.tex", mode='w') as f:
+        # Reset index so rows are 0,1,2,...
+        df_lbs = df_lbs.reset_index(drop=True)
+
+        print(r"\begin{tikzpicture}", file=f)
+        print(r"\begin{axis}[", file=f)
+        print(r"    width=12cm,", file=f)
+        print(r"    height=7cm,", file=f)
+        print(r"    xlabel={Attempt},", file=f)
+        print(r"    ylabel={LB for diagonally dominance},", file=f)
+        print(r"    grid=major,", file=f)
+        print(r"    legend style={at={(1.05,1)}, anchor=north west},", file=f)
+        print(r"]", file=f)
+
+        # Styles for the 3 columns
+        styles = [
+            "only marks, mark=*,          mark size=2.5pt, color=blue,            fill=blue,            draw=white, line width=0.4pt",
+            "only marks, mark=square*,    mark size=2.5pt, color=red,             fill=red,             draw=white, line width=0.4pt",
+            "only marks, mark=triangle*,  mark size=3.0pt, color=green!60!black,  fill=green!60!black,  draw=white, line width=0.4pt",
+            "only marks, mark=diamond*,   mark size=2.8pt, color=orange,          fill=orange,          draw=white, line width=0.4pt",
+            "only marks, mark=pentagon*,  mark size=2.8pt, color=purple,          fill=purple,          draw=white, line width=0.4pt",
+            "only marks, mark=x,          mark size=3.0pt, color=black,                                line width=0.8pt"
+        ]
+
+        for k, col in enumerate(df_lbs.columns):
+            safe_col = str(col).replace("_", r"\_")
+            style = styles[k % len(styles)]
+
+            print(rf"\addplot[{style}] coordinates {{", file=f)
+            for i, val in enumerate(df_lbs[col]):
+                print(f"({i},{float(val):.6f})", file=f)
+            print(r"};", file=f)
+            print(rf"\addlegendentry{{{safe_col}}}", file=f)
+
+        print(r"\end{axis}", file=f)
+        print(r"\end{tikzpicture}", file=f)
