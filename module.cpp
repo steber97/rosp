@@ -23,13 +23,13 @@ struct XYPoint {
     bool operator!=(const XYPoint& other) const { return !(*this == other); }
 };
 
-double get_y(XYPoint p, double x, double m) {
+double get_y(const XYPoint& p, double x, double m) {
     // Given a line as point p and angular coefficient m,
     // compute the y coordinate for coordinate x.
     return m * (x - p.x) + p.y;
 }
 
-XYPoint pt_intersect(XYPoint p1, double m1, XYPoint p2, double m2) {
+XYPoint pt_intersect(const XYPoint& p1, double m1, const XYPoint& p2, double m2) {
     if (std::abs(m1 - m2) < EPS) throw std::runtime_error("Parallel lines do not intersect");
     double x = (-m2 * p2.x + m1 * p1.x - p1.y + p2.y) / (m1 - m2);
     double y = m1 * (x - p1.x) + p1.y;
@@ -125,7 +125,7 @@ class PiecewiseFunction {
 public:
     std::vector<PiecewiseSegment> segments;
 
-    PiecewiseFunction(std::vector<PiecewiseSegment> segs) : segments(segs) {}
+    PiecewiseFunction(const std::vector<PiecewiseSegment>& segs) : segments(segs) {}
 
     void shorten() {
         if (segments.empty()) return;
@@ -151,7 +151,7 @@ public:
 
 // --- Logic Functions ---
 
-PiecewiseFunction create_piecewise_linear(py::array_t<double> m_arr, py::array_t<double> v_arr, int row_idx) {
+PiecewiseFunction create_piecewise_linear(const py::array_t<double>& m_arr, const py::array_t<double>& v_arr, int row_idx) {
     auto m = m_arr.unchecked<1>();
     auto v = v_arr.unchecked<1>();
     ssize_t n = m.shape(0);
