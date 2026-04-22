@@ -202,10 +202,33 @@ PiecewiseFunction create_piecewise_linear(py::array_t<double> m_arr, py::array_t
 
 PiecewiseFunction min_piecewise_linear(const PiecewiseFunction& l1, const PiecewiseFunction& l2) {
     std::vector<double> xs;
-    for (size_t i = 1; i < l1.segments.size(); ++i) xs.push_back(l1.segments[i].p1->x);
-    for (size_t j = 1; j < l2.segments.size(); ++j) xs.push_back(l2.segments[j].p1->x);
-    std::sort(xs.begin(), xs.end());
-    xs.erase(std::unique(xs.begin(), xs.end(), [](double a, double b){ return std::abs(a-b) < EPS; }), xs.end());
+    size_t i = 1;
+    size_t j = 1;
+    
+    while(i < l1.segments.size() && j < l2.segments.size()) {
+        if (std::abs(l1.segments[i].p1->x - l2.segments[j].p1->x) < EPS) {
+            xs.push_back(l1.segments[i].p1->x);
+            i++;
+            j++;
+        }
+        else if (l1.segments[i].p1->x < l2.segments[j].p1->x) {
+            xs.push_back(l1.segments[i].p1->x);
+            i++;
+        }
+        else {
+            xs.push_back(l2.segments[j].p1->x);
+            j++;
+        }
+    }
+    
+    while (i < l1.segments.size()) {
+        xs.push_back(l1.segments[i].p1->x);
+        i++;
+    }
+    while(j < l2.segments.size()) {
+        xs.push_back(l2.segments[j].p1->x);
+        j++;
+    }
 
     auto split = [](const PiecewiseFunction& f, const std::vector<double>& points) {
         std::vector<PiecewiseSegment> res;
