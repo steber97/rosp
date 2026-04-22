@@ -17,6 +17,7 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
     args: repetitions. Namely, we try to write M = sum_{i=1}^{rep} x_i x_i^T 
             as the sum of rank-repetitions vectors.
     """
+    total_time_opt_x = 0
     n = len(M)
     repetitions = int(args[0]) if len(args) > 0 else 1  # Use as default 2
     M_copy = M.copy()
@@ -32,28 +33,29 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
         directions = []
         if rep > 0:
             for k in range(rep):
-                directions.append(np.ones(n))
+                dir = np.ones(n)
                 i, dd_val = dd_value[k]
-                directions[-1][i] = min(1, M_copy[i,i])
+                dir[i] = min(1, M_copy[i,i])
                 for j in range(n):
                     if j != i:
-                        directions[-1][j] = M_copy[i,j] / (min(1, M_copy[i,i]))
-                directions[-1] /= np.sqrt(directions[-1] @ directions[-1])
+                        dir[j] = M_copy[i,j] / (min(1, M_copy[i,i]))
+                dir /= np.sqrt(dir @ dir)
                 # assert abs(directions[-1]@directions[-1] - 1) < EPS
                 if k > 0:
-                    if directions[-1] @ directions[0] < EPS:
-                        directions[-1] = -directions[-1]
+                    if dir @ directions[0] < EPS:
+                        dir = -dir
+                directions.append(dir)
             tot = np.sum([dd_value[k][1] for k in range(rep)])
             direction = np.sum([directions[k] * dd_value[k][1] / tot for k in range(rep)], axis=0)
             direction /= np.sqrt(direction @ direction)
-        
-            x = optimization_module.maximize_x_cpp(M_copy, np.outer(direction, direction))
-            # x2 = argmax_x(M_copy, np.outer(direction, direction))
+            S = np.outer(direction, direction)
+            start = time()
+            x = optimization_module.maximize_x_cpp(M_copy, S)
+            total_time_opt_x += time() - start
+            # x2 = argmax_x(M_copy, S)
             # print(x, x2)
-            M_copy -= x * np.outer(direction, direction)
-            # M_copy -= np.outer(direction, direction)
-
-    
+            M_copy -= x * S
+    print("time opt x:", total_time_opt_x)
     return gershgorin_lb(M_copy)
 
 if __name__=="__main__":
