@@ -75,14 +75,18 @@ def create_rand_dd_plus_ros(n: int, alpha_dd: float = 0.5) -> np.ndarray:
     return alpha_dd * dd + (1-alpha_dd) * np.outer(v, v)
 
 
-def create_rand_psd_matrix(n):
-    m = np.random.randint(low=1, high=n+1)
-    # m = 2
+def create_rand_psd_matrix(n, sparsity=0.0, diag_eps = 0.0, rank=1e6):
+    m = min(np.random.randint(low=1, high=n+1), int(rank))
+
     B = (np.random.rand(n*m).reshape(m, n) - 0.5) * 2 
     # B = np.random.randint(-10,10,size=(m, n)).astype(float)
-    # The eye function helps a bit, because it shifts the eigenvalues up.
-    const = 0.1
-    return B.T @ B + np.eye(n) * const
+
+    # sparsify:
+    mask = np.random.rand(n*m).reshape(m, n) > sparsity
+    B[~mask] = 0
+
+    # assert np.sum(B > (0 + EPS)) < (n**2) * (sparsity - 0.1)   
+    return B.T @ B + np.eye(n) * diag_eps
 
 
 def heuristic_psd_check(M: np.ndarray, lb_f: Callable[..., float], *args) -> bool:

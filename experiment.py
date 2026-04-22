@@ -21,23 +21,24 @@ np.set_printoptions(precision=2, suppress=True)
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 5
+    n = 100
     attempts = 50
     
     lb_functions = [
         (gershgorin_lb, "Gershgorin", ()),
         (deville_lb, "DeVille", ()),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=3)", (3)),
-        (sos_lb, "sos", ()),
+        (avg_direction_v2_lb, "Algorithm 2(k=3)", (4)),
+        # (sos_lb, "sos", ()),
         # (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
     ]
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
     for att in tqdm(range(attempts)):
-        M = create_rand_psd_matrix(n)
+        M = create_rand_psd_matrix(n, 0.0, 0.1, 2)
         if att == 0:
+            print("n=", n)
             print(M)
         row = {}
         for lb_f, lb_name, args in lb_functions:
@@ -48,22 +49,27 @@ if __name__ == "__main__":
         df_result.loc[len(df_result)] = row
     print(df_result.describe())
 
-    df_result = df_result.sort_values(by='sos')
+    df_result = df_result.sort_values(by='Algorithm 2(k=3)')
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
     for lb_f, lb_name, args in lb_functions:
-        plt.scatter(
+        axs[0].scatter(
             [i for i in range(len(df_result))],
             df_result[lb_name], label=lb_name
         )
     
-    plt.plot(
+    axs[0].plot(
         [i for i in range(len(df_result))],
         [0 for i in range(len(df_result))], label='zero')
+    axs[0].legend()
     
+    df_result[[col for col in df_result.columns if "time" in col]].boxplot(ax=axs[1])
+
     df_lbs = df_result[[col for col in df_result.columns if "time" not in col]]
     print((df_lbs>0).sum(axis=0))
-
     plt.legend()
     plt.show()
+    
     with open("plot.tex", mode='w') as f:
         # Reset index so rows are 0,1,2,...
         df_lbs = df_lbs.reset_index(drop=True)
