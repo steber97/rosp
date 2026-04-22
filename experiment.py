@@ -18,25 +18,17 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 
 np.set_printoptions(precision=2, suppress=True)
 
-if __name__ == "__main__":
-    
-    np.random.seed(42)
-    n = 100
-    attempts = 50
-    
-    lb_functions = [
-        (gershgorin_lb, "Gershgorin", ()),
-        (deville_lb, "DeVille", ()),
-        (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=3)", (4)),
-        # (sos_lb, "sos", ()),
-        # (abs_lb, "abs", ()),
-        (eig_lb, "eigenvalue", ()),
-    ]
+def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval):
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
     for att in tqdm(range(attempts)):
-        M = create_rand_psd_matrix(n, 0.0, 0.1, 2)
+        M = create_rand_psd_matrix(
+            n=n, 
+            sparsity=sparsity, 
+            diag_eps=diag_eps, 
+            rank=rank, 
+            rangeval=rangeval)
+    
         if att == 0:
             print("n=", n)
             print(M)
@@ -49,7 +41,34 @@ if __name__ == "__main__":
         df_result.loc[len(df_result)] = row
     print(df_result.describe())
 
-    df_result = df_result.sort_values(by='Algorithm 2(k=3)')
+    df_result = df_result.sort_values(by='Algorithm 2(k=4)')  
+    return df_result  
+
+
+if __name__ == "__main__":
+    
+    np.random.seed(42)
+    n = 100
+    attempts = 100
+    
+    lb_functions = [
+        (gershgorin_lb, "Gershgorin", ()),
+        # (deville_lb, "DeVille", ()),
+        (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
+        (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
+        # (sos_lb, "sos", ()),
+        # (abs_lb, "abs", ()),
+        (eig_lb, "eigenvalue", ()),
+    ]
+    
+    df_result = run_experiment(
+        lb_functions=lb_functions, 
+        n=n,
+        attempts=attempts, 
+        sparsity=0,
+        diag_eps=0.1,
+        rank=n,
+        rangeval=(-1,1))
 
     fig, axs = plt.subplots(1, 2, figsize=(10, 4))
     for lb_f, lb_name, args in lb_functions:

@@ -75,10 +75,10 @@ def create_rand_dd_plus_ros(n: int, alpha_dd: float = 0.5) -> np.ndarray:
     return alpha_dd * dd + (1-alpha_dd) * np.outer(v, v)
 
 
-def create_rand_psd_matrix(n, sparsity=0.0, diag_eps = 0.0, rank=1e6):
+def create_rand_psd_matrix(n, sparsity=0.0, diag_eps = 0.0, rank=1e6, rangeval=(-1,1)):
     m = min(np.random.randint(low=1, high=n+1), int(rank))
 
-    B = (np.random.rand(n*m).reshape(m, n) - 0.5) * 2 
+    B = (np.random.rand(n*m).reshape(m, n)) * (rangeval[1]-rangeval[0]) + rangeval[0]
     # B = np.random.randint(-10,10,size=(m, n)).astype(float)
 
     # sparsify:
