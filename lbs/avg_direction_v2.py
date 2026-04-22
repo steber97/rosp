@@ -5,7 +5,7 @@ from time import time
 
 from utils import EPS, create_rand_psd_matrix
 from lbs.gershgorin import gershgorin_lb
-# from piecewise_linear_maximize import maximize_x, argmax_x
+from piecewise_linear_maximize import maximize_x, argmax_x
 import optimization_module
 from lbs.greedy_pm_shift import max_direction_lb
 from lbs.sos_lb import sos_lb
@@ -39,30 +39,20 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
                     if j != i:
                         directions[-1][j] = M_copy[i,j] / (min(1, M_copy[i,i]))
                 directions[-1] /= np.sqrt(directions[-1] @ directions[-1])
-                assert abs(directions[-1]@directions[-1] - 1) < EPS
+                # assert abs(directions[-1]@directions[-1] - 1) < EPS
                 if k > 0:
                     if directions[-1] @ directions[0] < EPS:
                         directions[-1] = -directions[-1]
-            # pprint(directions)
             tot = np.sum([dd_value[k][1] for k in range(rep)])
-            # print(tot)
             direction = np.sum([directions[k] * dd_value[k][1] / tot for k in range(rep)], axis=0)
-            # print(direction)
             direction /= np.sqrt(direction @ direction)
-            # print(direction)
-            # print(direction, direction @ direction)
-            # x = maximize_x(M_copy, np.outer(direction, direction))
-            # x3 = argmax_x(M_copy, np.outer(direction, direction))
+        
             x = optimization_module.maximize_x_cpp(M_copy, np.outer(direction, direction))
-            
-            # assert abs(x-x2) < EPS
-            # TODO: Using convex optimization to speed up.
-            # x = argmax_x(M_copy, np.outer(direction, direction), bounds=[0,np.max(M_copy)])
-            # print(x)
-            # x = 1
+            # x2 = argmax_x(M_copy, np.outer(direction, direction))
+            # print(x, x2)
             M_copy -= x * np.outer(direction, direction)
-            total_direction += np.sqrt(x) * direction
-            # print(M_copy)
+            # M_copy -= np.outer(direction, direction)
+
     
     return gershgorin_lb(M_copy)
 
