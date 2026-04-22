@@ -55,7 +55,7 @@ def avg_direction_v2_lb(M: np.ndarray, *args) -> float:
             # x2 = argmax_x(M_copy, S)
             # print(x, x2)
             M_copy -= x * S
-    print("time opt x:", total_time_opt_x)
+    # print("time opt x:", total_time_opt_x)
     return gershgorin_lb(M_copy)
 
 if __name__=="__main__":
