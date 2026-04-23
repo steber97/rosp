@@ -68,6 +68,8 @@ if __name__ == "__main__":
         axes[i//2][i%2].plot(
             [i + 1 for i in range(len(df_result))],
             [0 for i in range(len(df_result))], label='zero')
+        axes[i//2][i%2].set_xticks([i for i in range(0, 21, 2)])
+        axes[i//2][i%2].set_xticklabels(["{}".format(i) for i in range(0, 21, 2)])
         # axes[i//2][i%2].legend()
     
         # df_result[[col for col in df_result.columns if "time" in col]].boxplot(ax=axs[1])
