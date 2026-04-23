@@ -48,8 +48,19 @@ if __name__ == "__main__":
             sortby="Algorithm 2(k=2)")
     
         for lb_f, lb_name, args in lb_functions:
+            j = 0
+            # The shift just helps visualizing overlapping scatters.
+            shift = 0.1
+            if lb_name=="Gershgorin":
+                j += shift
+            elif lb_name=="DeVille":
+                j -= shift
+            elif lb_name=="Algorithm 2(k=1)":
+                j += shift
+            elif lb_name=="Algorithm 2(k=2)":
+                j -= shift
             axes[i//2][i%2].scatter(
-                [i for i in range(len(df_result))],
+                [i+j for i in range(len(df_result))],
                 df_result[lb_name], label=lb_name
             )
         
