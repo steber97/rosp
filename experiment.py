@@ -18,7 +18,7 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 
 np.set_printoptions(precision=2, suppress=True)
 
-def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval):
+def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval, sortby):
     df_result = pd.DataFrame(columns=[lb_f[1] for lb_f in lb_functions] + [lb_f[1] + "_time" for lb_f in lb_functions])
 
     for att in tqdm(range(attempts)):
@@ -41,19 +41,19 @@ def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval
         df_result.loc[len(df_result)] = row
     print(df_result.describe())
 
-    df_result = df_result.sort_values(by='Algorithm 2(k=4)')  
+    df_result = df_result.sort_values(by=sortby)  
     return df_result  
 
 
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 100
-    attempts = 100
+    n = 5000
+    attempts = 1
     
     lb_functions = [
         (gershgorin_lb, "Gershgorin", ()),
-        # (deville_lb, "DeVille", ()),
+        (deville_lb, "DeVille", ()),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
         (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
         # (sos_lb, "sos", ()),
@@ -66,62 +66,6 @@ if __name__ == "__main__":
         n=n,
         attempts=attempts, 
         sparsity=0,
-        diag_eps=0.1,
-        rank=n,
+        diag_eps=0.5,
+        rank=1,
         rangeval=(-1,1))
-
-    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
-    for lb_f, lb_name, args in lb_functions:
-        axs[0].scatter(
-            [i for i in range(len(df_result))],
-            df_result[lb_name], label=lb_name
-        )
-    
-    axs[0].plot(
-        [i for i in range(len(df_result))],
-        [0 for i in range(len(df_result))], label='zero')
-    axs[0].legend()
-    
-    df_result[[col for col in df_result.columns if "time" in col]].boxplot(ax=axs[1])
-
-    df_lbs = df_result[[col for col in df_result.columns if "time" not in col]]
-    print((df_lbs>0).sum(axis=0))
-    plt.legend()
-    plt.show()
-    
-    with open("plot.tex", mode='w') as f:
-        # Reset index so rows are 0,1,2,...
-        df_lbs = df_lbs.reset_index(drop=True)
-
-        print(r"\begin{tikzpicture}", file=f)
-        print(r"\begin{axis}[", file=f)
-        print(r"    width=12cm,", file=f)
-        print(r"    height=7cm,", file=f)
-        print(r"    xlabel={Attempt},", file=f)
-        print(r"    ylabel={LB for diagonally dominance},", file=f)
-        print(r"    grid=major,", file=f)
-        print(r"    legend style={at={(1.05,1)}, anchor=north west},", file=f)
-        print(r"]", file=f)
-
-        # Styles for the 3 columns
-        styles = [
-            "only marks, mark=*,          mark size=2.5pt, color=blue,            fill=blue,            draw=white, line width=0.4pt",
-            "only marks, mark=square*,    mark size=2.5pt, color=red,             fill=red,             draw=white, line width=0.4pt",
-            "only marks, mark=triangle*,  mark size=3.0pt, color=green!60!black,  fill=green!60!black,  draw=white, line width=0.4pt",
-            "only marks, mark=diamond*,   mark size=2.8pt, color=orange,          fill=orange,          draw=white, line width=0.4pt",
-            "only marks, mark=pentagon*,  mark size=2.8pt, color=purple,          fill=purple,          draw=white, line width=0.4pt",
-            "only marks, mark=x,          mark size=3.0pt, color=black,                                line width=0.8pt"
-        ]
-
-        for k, col in enumerate(df_lbs.columns):
-            safe_col = str(col).replace("_", r"\_")
-            style = styles[k % len(styles)]
-
-            print(rf"\addplot[{style}] coordinates {{", file=f)
-            for i, val in enumerate(df_lbs[col]):
-                print(f"({i},{float(val):.6f})", file=f)
-            print(r"};", file=f)
-            print(rf"\addlegendentry{{{safe_col}}}", file=f)
-
-        print(r"\end{axis}", file=f)
-        print(r"\end{tikzpicture}", file=f)
