@@ -20,36 +20,61 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 np.set_printoptions(precision=2, suppress=True)
 
 if __name__ == "__main__":
-    
     np.random.seed(42)
-    ns = [i*1000 for i in range(1,11)]
+    n = 5000
+    attempts = 20
     
     lb_functions = [
         (gershgorin_lb, "Gershgorin", ()),
         (deville_lb, "DeVille", ()),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
+        (avg_direction_v2_lb, "Algorithm 2(k=2)", (2)),
         # (sos_lb, "sos", ()),
         # (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
     ]
-    
-    rows = pd.DataFrame()
-    for i, n in enumerate(ns):
+    diag_eps_v = [0, 1, 2, 3]
+    fig, axes = fig, axs = plt.subplots(2, 2, figsize=(10, 4))
+
+    for i, diag_eps in enumerate(diag_eps_v):
 
         df_result = run_experiment(
             lb_functions=lb_functions, 
             n=n,
-            attempts=1, 
+            attempts=attempts, 
             sparsity=0,
-            diag_eps=2,
-            rank=2,
-            rangeval=(-1,1))
+            diag_eps=diag_eps,
+            rank=1,
+            rangeval=(-1,1),
+            sortby="Algorithm 2(k=2)")
+    
+        for lb_f, lb_name, args in lb_functions:
+            j = 0
+            shift = 0.1
+            if lb_name=="Gershgorin":
+                j += shift
+            elif lb_name=="DeVille":
+                j -= shift
+            elif lb_name=="Algorithm 2(k=1)":
+                j += shift
+            elif lb_name=="Algorithm 2(k=2)":
+                j -= shift
+            axes[i//2][i%2].scatter(
+                [i+1+j for i in range(len(df_result))],
+                df_result[lb_name], label=lb_name
+            )
         
-        df_result['n'] = n
-        if len(rows) == 0:
-            rows = df_result
-        else:
-            rows = pd.concat([rows, df_result], ignore_index=True)
+        axes[i//2][i%2].set_title("eps={}".format(diag_eps))
+        axes[i//2][i%2].plot(
+            [i for i in range(len(df_result))],
+            [0 for i in range(len(df_result))], label='zero')
+        # axes[i//2][i%2].legend()
+    
+        # df_result[[col for col in df_result.columns if "time" in col]].boxplot(ax=axs[1])
 
-    rows.to_csv("experiment3.csv")
+        df_lbs = df_result[[col for col in df_result.columns if "time" not in col]]
+        print("diag_eps={}, correct={}".format(diag_eps, (df_lbs>0-EPS).sum(axis=0)))
+    fig.supxlabel('Attempt', fontsize=12)
+    fig.supylabel('LB on smallest eigenvalue', fontsize=12)
+    plt.legend()
+    plt.show()

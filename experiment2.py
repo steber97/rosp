@@ -27,7 +27,7 @@ if __name__ == "__main__":
         (gershgorin_lb, "Gershgorin", ()),
         (deville_lb, "DeVille", ()),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
+        (avg_direction_v2_lb, "Algorithm 2(k=2)", (2)),
         # (sos_lb, "sos", ()),
         # (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
@@ -43,7 +43,8 @@ if __name__ == "__main__":
             sparsity=0,
             diag_eps=1,
             rank=2,
-            rangeval=(-1,1))
+            rangeval=(-1,1),
+            sortby="Algorithm 2(k=2)")
         res[n] = df_result
     
     for lb, lb_name, args in lb_functions:
