@@ -27,7 +27,7 @@ if __name__ == "__main__":
         (gershgorin_lb, "Gershgorin", ()),
         (deville_lb, "DeVille", ()),
         (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
+        (avg_direction_v2_lb, "Algorithm 2(k=2)", (2)),
         # (sos_lb, "sos", ()),
         # (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
@@ -44,7 +44,8 @@ if __name__ == "__main__":
             sparsity=0,
             diag_eps=diag_eps,
             rank=n,
-            rangeval=(-1,1))
+            rangeval=(-1,1),
+            sortby="Algorithm 2(k=2)")
     
         for lb_f, lb_name, args in lb_functions:
             axes[i//2][i%2].scatter(
