@@ -19,6 +19,8 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 np.set_printoptions(precision=2, suppress=True)
 
 if __name__ == "__main__":
+
+    print("Experiment 1")
     np.random.seed(42)
     n = 10
     attempts = 100
@@ -30,10 +32,12 @@ if __name__ == "__main__":
         (avg_direction_v2_lb, "Algorithm 2(k=2)", (2)),
         # (sos_lb, "sos", ()),
         # (abs_lb, "abs", ()),
-        (eig_lb, "eigenvalue", ()),
+        (eig_lb, "eigenvalue", ()), 
     ]
     diag_eps_v = [0, 0.1, 0.5, 1]
-    fig, axes = fig, axs = plt.subplots(2, 2, figsize=(10, 4))
+    fig, axes = fig, axs = plt.subplots(2, 2, figsize=(20, 10))
+
+    df = pd.DataFrame()
 
     for i, diag_eps in enumerate(diag_eps_v):
 
@@ -46,7 +50,8 @@ if __name__ == "__main__":
             rank=n,
             rangeval=(-1,1),
             sortby="Algorithm 2(k=2)")
-    
+        df_result['eps'] = [diag_eps for i in range(len(df_result))]
+        df = pd.concat([df_result, df], ignore_index=True)
         for lb_f, lb_name, args in lb_functions:
             j = 0
             # The shift just helps visualizing overlapping scatters.
@@ -72,9 +77,12 @@ if __name__ == "__main__":
     
         # df_result[[col for col in df_result.columns if "time" in col]].boxplot(ax=axs[1])
 
-        df_lbs = df_result[[col for col in df_result.columns if "time" not in col]]
-        print("diag_eps={}, correct={}".format(diag_eps, (df_lbs>0-EPS).sum(axis=0)))
+        df_lbs = df_result[[col for col in df_result.columns if "time" not in col and "eps" not in col]]
+        print("diag_eps={}\ncorrect=\n{}".format(diag_eps, (df_lbs>0-EPS).sum(axis=0)))
     fig.supxlabel('Attempt', fontsize=12)
     fig.supylabel('LB on smallest eigenvalue', fontsize=12)
     plt.legend()
-    plt.show()
+    plt.savefig('figures/experiment1/experiment1.png', dpi=1600)
+    df.to_csv("figures/experiment1/results.csv")
+
+    print("Experiment 1 Finished!")
