@@ -83,6 +83,6 @@ if __name__ == "__main__":
     fig.supylabel('LB on smallest eigenvalue', fontsize=12)
     plt.legend()
     plt.savefig('figures/experiment1/experiment1.png', dpi=1600)
-    df.to_csv("figures/experiment1/results.csv")
+    df.to_csv("figures/experiment1/experiment1.csv")
 
-    print("Experiment 1 Finished!")
+    print("Experiment 1 finished!")
