@@ -19,7 +19,7 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 np.set_printoptions(precision=2, suppress=True)
 
 if __name__ == "__main__":
-    
+    print("Experiment 2")
     np.random.seed(42)
     ns = [i*1000 for i in range(1,11)]
     
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         (eig_lb, "eigenvalue", ()),
     ]
     
-    res = {}
+    df = pd.DataFrame()
     for i, n in enumerate(ns):
 
         df_result = run_experiment(
@@ -45,13 +45,16 @@ if __name__ == "__main__":
             rank=2,
             rangeval=(-1,1),
             sortby="Algorithm 2(k=2)")
-        res[n] = df_result
+        df_result['n'] = [n for i in range(len(df_result))]
+        df = pd.concat([df_result, df], ignore_index=True)
     
     for lb, lb_name, args in lb_functions:
-        times = [np.mean(res[n][lb_name+"_time"]) for n in ns]
+        times = [np.mean(df[df['n']==n][lb_name+"_time"]) for n in ns]
         plt.plot(ns, times, label=lb_name)
     plt.xlabel("n")
     plt.ylabel("Time (s)")
     plt.title("Running time for increasing n")
     plt.legend()
-    plt.show()
+    plt.savefig("figures/experiment2/experiment2.png", dpi=1600)
+    df.to_csv("figures/experiment2/experiment2.csv")
+    print("Experiment 2 finished!")
