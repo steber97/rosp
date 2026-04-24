@@ -32,7 +32,7 @@ def experiment2():
         # (abs_lb, "abs", ()),
         (eig_lb, "eigenvalue", ()),
     ]
-    
+    plt.figure()
     df = pd.DataFrame()
     for i, n in enumerate(ns):
 
@@ -42,7 +42,7 @@ def experiment2():
             attempts=1, 
             sparsity=0,
             diag_eps=1,
-            rank=2,
+            rank=n,
             rangeval=(-1,1),
             sortby="Algorithm 2(k=2)")
         df_result['n'] = [n for i in range(len(df_result))]
