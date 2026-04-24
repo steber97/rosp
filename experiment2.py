@@ -4,7 +4,6 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 
-from experiment import run_experiment
 from lbs.deville import deville_lb, brauers_lb
 from lbs.eig import eig_lb
 from lbs.gershgorin import gershgorin_lb
@@ -18,7 +17,8 @@ from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_
 
 np.set_printoptions(precision=2, suppress=True)
 
-if __name__ == "__main__":
+def experiment2():
+    from experiment import run_experiment # for circular import
     print("Experiment 2")
     np.random.seed(42)
     ns = [i*1000 for i in range(1,11)]

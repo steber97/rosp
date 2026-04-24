@@ -15,6 +15,9 @@ from lbs.avg_direction_v2 import avg_direction_v2_lb
 from lbs.sos_lb import sos_lb
 from lbs.abs_lb import abs_lb
 from utils import create_rand_symmetric_matrix, create_rand_dd_plus_ros, create_rand_psd_matrix, EPS
+from experiment1 import experiment1
+from experiment2 import experiment2
+from experiment3 import experiment3
 
 np.set_printoptions(precision=2, suppress=True)
 
@@ -29,9 +32,6 @@ def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval
             rank=rank, 
             rangeval=rangeval)
     
-        if att == 0:
-            print("n=", n)
-            print(M)
         row = {}
         for lb_f, lb_name, args in lb_functions:
             start = time.time()
@@ -39,7 +39,7 @@ def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval
             end = time.time() - start
             row[lb_name+"_time"] = end
         df_result.loc[len(df_result)] = row
-    print(df_result.describe())
+    # print(df_result.describe())
 
     df_result = df_result.sort_values(by=sortby)  
     return df_result  
@@ -48,24 +48,7 @@ def run_experiment(lb_functions, n, attempts, sparsity, diag_eps, rank, rangeval
 if __name__ == "__main__":
     
     np.random.seed(42)
-    n = 5000
-    attempts = 1
+    experiment1()
+    experiment2()
+    experiment3()
     
-    lb_functions = [
-        (gershgorin_lb, "Gershgorin", ()),
-        (deville_lb, "DeVille", ()),
-        (avg_direction_v2_lb, "Algorithm 2(k=1)", (1)),
-        (avg_direction_v2_lb, "Algorithm 2(k=4)", (4)),
-        # (sos_lb, "sos", ()),
-        # (abs_lb, "abs", ()),
-        (eig_lb, "eigenvalue", ()),
-    ]
-    
-    df_result = run_experiment(
-        lb_functions=lb_functions, 
-        n=n,
-        attempts=attempts, 
-        sparsity=0,
-        diag_eps=0.5,
-        rank=1,
-        rangeval=(-1,1))
